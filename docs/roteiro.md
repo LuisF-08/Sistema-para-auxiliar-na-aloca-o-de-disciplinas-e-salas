@@ -10,7 +10,7 @@ Desenvolver um sistema web utilizando Django para gerenciar a alocação de disc
 
 - Backend: Django 5.x
 - Frontend: Django Templates + Bootstrap 5
-- Banco de Dados: PostgreSQL / SQLite
+- Banco de Dados: PostgreSQL 17/ SQLite
 - Linguagem: Python 3.12+
 - Gestão Ágil: Trello ou Jira
 
