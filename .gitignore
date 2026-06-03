@@ -1,0 +1,75 @@
+# ambiente e segredos
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.python-version
+
+# django / banco local
+db.sqlite3
+*.sqlite3
+*.db
+local_settings.py
+
+# arquivos gerados pelo django
+staticfiles/
+media/
+
+# logs
+*.log
+logs/
+
+# testes e cobertura
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# linters e type checkers
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.pyre/
+
+# builds e pacotes
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# notebooks
+.ipynb_checkpoints/
+
+# ide/editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# arquivos temporários
+*.tmp
+*.temp
+*.bak
+*.orig
