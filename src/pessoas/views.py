@@ -1,3 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
+def professor_list(request):
+    return render(request, 'pessoas/professor_list.html', {})
