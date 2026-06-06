@@ -1,3 +1,4 @@
 from django.shortcuts import render
 
-# Create your views here.
+def curso_list(request):
+    return render(request, 'academico/curso_list.html', {})
