@@ -1,5 +1,5 @@
-from alocacao.models import Sala
-from alocacao.selectors.alocacoes import alocacoes_ativas
+from infraestrutura.models import Sala
+from alocacao.repositories.alocacoes import alocacoes_ativas
 
 
 def salas_livres(periodo_letivo, horario, capacidade_minima=None, recursos=None):
