@@ -3,23 +3,15 @@ from datetime import date, time
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from .models import (
-    Alocacao,
-    Curso,
-    Disciplina,
-    DisponibilidadeProfessor,
-    Horario,
-    PeriodoLetivo,
-    Professor,
-    RecursoSala,
-    Sala,
-    Turma,
-)
-from .selectors.alocacoes import carga_horaria_professor, ocupacao_por_sala
-from .selectors.horarios import horarios_livres_para_turma
-from .selectors.salas import salas_livres
-from .services.alocacoes import cancelar_alocacao, criar_alocacao
-from .services.conflitos import mapear_conflitos
+from alocacao.models import Alocacao, Horario
+from academico.models import Curso, Disciplina, PeriodoLetivo
+from infraestrutura.models import RecursoSala, Sala
+from pessoas.models import DisponibilidadeProfessor, Professor, Turma
+from alocacao.repositories.alocacoes import carga_horaria_professor, ocupacao_por_sala
+from alocacao.repositories.horarios import horarios_livres_para_turma
+from alocacao.repositories.salas import salas_livres
+from alocacao.services.alocacoes import cancelar_alocacao, criar_alocacao
+from alocacao.services.conflitos import mapear_conflitos
 
 
 class AlocacaoModelTest(TestCase):
