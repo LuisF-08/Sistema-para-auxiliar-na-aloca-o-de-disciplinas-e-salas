@@ -1,5 +1,5 @@
-from alocacao.models import DisponibilidadeProfessor, Professor
-from alocacao.selectors.alocacoes import alocacoes_ativas
+from pessoas.models import DisponibilidadeProfessor, Professor
+from alocacao.repositories.alocacoes import alocacoes_ativas
 
 
 def professores_disponiveis(periodo_letivo, horario):
