@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from .models import Disciplina
 
-def curso_list(request):
-    return render(request, 'academico/curso_list.html', {})
+def disciplina_list(request):
+    disciplinas = Disciplina.objects.all()
+    return render(request, 'academico/disciplina_list.html', {'disciplinas': disciplinas})
