@@ -26,18 +26,14 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv(
 # -------------------------------------------------------------------
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # apps do projeto
-    "alocacao.apps.AlocacaoConfig",
-    "academico.apps.AcademicoConfig",
-    "pessoas.apps.PessoasConfig",
-    "infraestrutura.apps.InfraestruturaConfig",
-    "relatorios.apps.RelatoriosConfig",
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'rest_framework',
+    'django.contrib.staticfiles',
+    'alocacao.apps.AlocacaoConfig',
 ]
 
 MIDDLEWARE = [
@@ -126,17 +122,12 @@ USE_I18N = True
 USE_TZ = True
 
 
-# -------------------------------------------------------------------
-# arquivos estaticos
-# -------------------------------------------------------------------
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = 'static/'
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-
-# -------------------------------------------------------------------
-# chave primaria padrao
-# -------------------------------------------------------------------
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
