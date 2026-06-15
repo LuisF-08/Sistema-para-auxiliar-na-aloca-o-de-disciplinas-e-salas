@@ -4,6 +4,9 @@
         
         <div class="d-flex justify-content-between align-items-center mb-3">
          <h4>Disciplinas</h4>
+         <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Buscar disciplinas...">
+        </div>
           <a href="#" class="btn btn-primary">
             + Novo registro
             </a>
@@ -11,19 +14,24 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Código</th>
-                    <th>Nome</th>
+                    <th>Curso</th>
+                    <th>Carga Horária</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for disciplina in disciplinas %}
             <tr>
-                <td>{{ disciplina.codigo }}</td>
-                <td>{{ disciplina.nome }}</td>
+                <td>{{ disciplina.curso }}</td>
+                <td>{{ disciplina.carga_horaria }}</td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <a href="#" class="btn btn-sm btn-outline-danger">Excluir</a>
+                </td>
             </tr>
                 {% empty %}
             <tr>
-                <td colspan="5">Nenhuma disciplina cadastrada.</td>
+                <td colspan="6">Nenhuma disciplina cadastrada.</td>
             </tr>
                  {% endfor %}
     </tbody>
