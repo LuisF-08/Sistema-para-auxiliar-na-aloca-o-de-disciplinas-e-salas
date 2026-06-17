@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
     {% block content %}
-    <div class="d-flex justify-content-between align-items-end mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-0" style="color: #0f172a; font-size: 1.75rem;">Salas</h2>
             <p class="text-secondary mb-0" style="font-size: 0.875rem;">{{ salas|length }} registros cadastrados</p>
         </div>
-        <button type="button" class="btn text-white px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalSala" style="background-color: #1e293b; border-radius: 6px; font-weight: 500; border: none;">
+          <button type="button" class="btn btn-primary" style="background-color: #1e293b; border-radius: 6px; font-weight: 500; border: none;" data-bs-toggle="modal" data-bs-target="#modalSala">
             + Novo registro
         </button>
     </div>
