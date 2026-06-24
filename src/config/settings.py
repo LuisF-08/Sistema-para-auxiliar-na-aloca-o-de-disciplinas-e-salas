@@ -1,12 +1,12 @@
 """configuracoes do django para o sistema de alocacao de disciplinas e salas."""
 
 from pathlib import Path
-
+from dotenv import load_dotenv
 from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = BASE_DIR / "src"
-
+load_dotenv()
 
 # -------------------------------------------------------------------
 # seguranca
@@ -20,20 +20,19 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
-
-# -------------------------------------------------------------------
-# aplicacoes instaladas
-# -------------------------------------------------------------------
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'rest_framework',
     'django.contrib.staticfiles',
-    'alocacao.apps.AlocacaoConfig',
+    'rest_framework',
+    'academico',
+    'pessoas',
+    'infraestrutura',
+    'alocacao',
+    'relatorios',
 ]
 
 MIDDLEWARE = [
@@ -102,6 +101,13 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+# Validação para a API pelo Django
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ]
+}
 
 
 # -------------------------------------------------------------------
