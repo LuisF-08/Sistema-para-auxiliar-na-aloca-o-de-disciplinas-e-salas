@@ -1,12 +1,12 @@
 """configuracoes do django para o sistema de alocacao de disciplinas e salas."""
 
 from pathlib import Path
-
+from dotenv import load_dotenv
 from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = BASE_DIR / "src"
-
+load_dotenv()
 
 # -------------------------------------------------------------------
 # seguranca
@@ -20,24 +20,19 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 
-
-# -------------------------------------------------------------------
-# aplicacoes instaladas
-# -------------------------------------------------------------------
-
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # apps do projeto
-    "alocacao.apps.AlocacaoConfig",
-    "academico.apps.AcademicoConfig",
-    "pessoas.apps.PessoasConfig",
-    "infraestrutura.apps.InfraestruturaConfig",
-    "relatorios.apps.RelatoriosConfig",
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'academico',
+    'pessoas',
+    'infraestrutura',
+    'alocacao',
+    'relatorios',
 ]
 
 MIDDLEWARE = [
@@ -107,6 +102,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Validação para a API pelo Django
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ]
+}
+
 
 # -------------------------------------------------------------------
 # internacionalizacao
@@ -122,17 +124,12 @@ USE_I18N = True
 USE_TZ = True
 
 
-# -------------------------------------------------------------------
-# arquivos estaticos
-# -------------------------------------------------------------------
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = 'static/'
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-
-# -------------------------------------------------------------------
-# chave primaria padrao
-# -------------------------------------------------------------------
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
