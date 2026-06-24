@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Carga Horária — SisAloc{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-white">Carga Horária dos Professores</h1>
+  {% if periodo %}
+    <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
+  {% else %}
+    <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
+  {% endif %}
+</div>
+
+{% if dados %}
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="border-b border-slate-700">
+        <tr>
+          <th class="text-left text-xs text-slate-400 px-6 py-3">Professor</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Alocações</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Carga Alocada</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Carga Máxima</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3 w-48">Utilização</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-700/50">
+        {% for d in dados %}
+          <tr class="hover:bg-slate-700/30 transition-colors">
+            <td class="px-6 py-4">
+              <p class="text-white font-medium">{{ d.professor.nome }}</p>
+              {% if d.professor.especialidade %}
+                <p class="text-xs text-slate-500">{{ d.professor.especialidade }}</p>
+              {% endif %}
+            </td>
+            <td class="px-4 py-4 text-slate-300 font-mono">{{ d.num_alocacoes }}</td>
+            <td class="px-4 py-4 font-mono
+              {% if d.no_limite %}text-amber-300{% else %}text-slate-300{% endif %}">
+              {{ d.carga_alocada }}h
+            </td>
+            <td class="px-4 py-4 text-slate-400 font-mono">{{ d.carga_maxima }}h</td>
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full
+                    {% if d.percentual >= 100 %}bg-red-500
+                    {% elif d.no_limite %}bg-amber-500
+                    {% else %}bg-emerald-500{% endif %}"
+                    style="width: {% if d.percentual > 100 %}100{% else %}{{ d.percentual }}{% endif %}%">
+                  </div>
+                </div>
+                <span class="text-xs font-mono
+                  {% if d.percentual >= 100 %}text-red-400
+                  {% elif d.no_limite %}text-amber-400
+                  {% else %}text-slate-400{% endif %}">
+                  {{ d.percentual }}%
+                </span>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-10 text-center">
+    <p class="text-slate-400 text-lg">Nenhum professor ativo encontrado.</p>
+  </div>
+{% endif %}
+{% endblock %}
