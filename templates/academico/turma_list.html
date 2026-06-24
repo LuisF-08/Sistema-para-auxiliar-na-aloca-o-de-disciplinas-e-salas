@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Turmas{% endblock %}
+{% block breadcrumb %}Turmas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="page-title mb-1">Turmas</h1>
+    <small class="text-muted">{{ turmas|length }} registro{{ turmas|length|pluralize }} cadastrado{{ turmas|length|pluralize }}</small>
+  </div>
+  <button type="button" class="btn btn-dark-navy" data-bs-toggle="modal" data-bs-target="#modalTurma" onclick="abrirModalCriar()">
+    + Novo registro
+  </button>
+</div>
+
+{% if not cursos_disponiveis or not periodos_disponiveis %}
+<div class="alert alert-warning">
+  ⚠️ É necessário ter pelo menos um <strong>Curso</strong> e um <strong>Período Letivo</strong> cadastrados antes de criar uma turma.
+</div>
+{% endif %}
+
+<div class="mb-3">
+  <input
+    type="text"
+    id="searchInput"
+    class="form-control"
+    placeholder="Buscar turmas..."
+    oninput="filtrarTabela()"
+  >
+</div>
+
+<div class="card card-soft">
+  <div class="table-responsive">
+    <table class="table table-soft align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Curso</th>
+          <th>Período Letivo</th>
+          <th>Turno</th>
+          <th>Alunos</th>
+          <th>Status</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaBody">
+        {% for turma in turmas %}
+        <tr>
+          <td><strong>{{ turma.nome }}</strong></td>
+          <td>{{ turma.curso.codigo }} – {{ turma.curso.nome }}</td>
+          <td>{{ turma.periodo_letivo }}</td>
+          <td class="text-capitalize">{{ turma.turno }}</td>
+          <td>
+            <span class="badge-soft-primary">{{ turma.numero_alunos }} alunos</span>
+          </td>
+          <td>
+            {% if turma.ativo %}
+              <span class="badge-soft-success">Ativa</span>
+            {% else %}
+              <span class="badge-soft-secondary">Inativa</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <button
+              type="button"
+              class="btn btn-icon-outline me-1"
+              data-bs-toggle="modal"
+              data-bs-target="#modalTurma"
+              data-id="{{ turma.pk }}"
+              data-nome="{{ turma.nome }}"
+              data-curso="{{ turma.curso_id }}"
+              data-periodo="{{ turma.periodo_letivo_id }}"
+              data-turno="{{ turma.turno }}"
+              data-alunos="{{ turma.numero_alunos }}"
+              data-ativo="{{ turma.ativo|yesno:'1,0' }}"
+              onclick="abrirModalEditar(this)"
+              title="Editar"
+            >
+              ✏️
+            </button>
+            <button
+              type="button"
+              class="btn btn-icon-outline delete"
+              data-bs-toggle="modal"
+              data-bs-target="#modalExcluir"
+              data-id="{{ turma.pk }}"
+              data-nome="{{ turma.nome }}"
+              onclick="abrirModalExcluir(this)"
+              title="Excluir"
+            >
+              🗑️
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            Nenhuma turma cadastrada ainda.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: CRIAR / EDITAR -->
+<div class="modal fade" id="modalTurma" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTurmaTitulo">Nova Turma</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" id="formTurma" action="{% url 'academico:turma_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Curso <span class="text-danger">*</span></label>
+              <select name="curso" id="campoCurso" class="form-select" required>
+                <option value="">Selecione...</option>
+                {% for curso in cursos_disponiveis %}
+                  <option value="{{ curso.pk }}">{{ curso.codigo }} – {{ curso.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Período Letivo <span class="text-danger">*</span></label>
+              <select name="periodo_letivo" id="campoPeriodo" class="form-select" required>
+                <option value="">Selecione...</option>
+                {% for periodo in periodos_disponiveis %}
+                  <option value="{{ periodo.pk }}">{{ periodo }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nome da Turma <span class="text-danger">*</span></label>
+            <input type="text" name="nome" id="campoNome" class="form-control" placeholder="Ex: CC-6B" required>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Turno</label>
+              <select name="turno" id="campoTurno" class="form-select">
+                <option value="">Selecione...</option>
+                <option value="matutino">Matutino</option>
+                <option value="vespertino">Vespertino</option>
+                <option value="noturno">Noturno</option>
+                <option value="integral">Integral</option>
+              </select>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <label class="form-label">Qtd. de Alunos <span class="text-danger">*</span></label>
+              <input type="number" name="numero_alunos" id="campoAlunos" class="form-control" min="1" required>
+            </div>
+          </div>
+
+          <div class="form-check">
+            <input type="checkbox" name="ativo" id="campoAtivo" class="form-check-input" checked>
+            <label class="form-check-label" for="campoAtivo">Turma ativa</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-dark-navy">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAR EXCLUSÃO -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Excluir Turma</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Você está prestes a excluir a turma <strong id="nomeExcluir"></strong>.</p>
+        <div class="alert alert-warning py-2 mb-0">Esta ação não pode ser desfeita.</div>
+      </div>
+      <div class="modal-footer">
+        <form method="post" id="formExcluir">
+          {% csrf_token %}
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filtrarTabela() {
+    const termo = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#tabelaBody tr').forEach(linha => {
+      linha.style.display = linha.textContent.toLowerCase().includes(termo) ? '' : 'none';
+    });
+  }
+
+  function abrirModalCriar() {
+    document.getElementById('modalTurmaTitulo').textContent = 'Nova Turma';
+    document.getElementById('formTurma').action = "{% url 'academico:turma_create' %}";
+    document.getElementById('formTurma').reset();
+    document.getElementById('campoAtivo').checked = true;
+  }
+
+  function abrirModalEditar(botao) {
+    const id = botao.dataset.id;
+    document.getElementById('modalTurmaTitulo').textContent = 'Editar Turma';
+    document.getElementById('formTurma').action = `/academico/turmas/${id}/editar/`;
+    document.getElementById('campoNome').value = botao.dataset.nome;
+    document.getElementById('campoCurso').value = botao.dataset.curso;
+    document.getElementById('campoPeriodo').value = botao.dataset.periodo;
+    document.getElementById('campoTurno').value = botao.dataset.turno;
+    document.getElementById('campoAlunos').value = botao.dataset.alunos;
+    document.getElementById('campoAtivo').checked = botao.dataset.ativo === '1';
+  }
+
+  function abrirModalExcluir(botao) {
+    document.getElementById('nomeExcluir').textContent = botao.dataset.nome;
+    document.getElementById('formExcluir').action = `/academico/turmas/${botao.dataset.id}/excluir/`;
+  }
+</script>
+{% endblock %}
