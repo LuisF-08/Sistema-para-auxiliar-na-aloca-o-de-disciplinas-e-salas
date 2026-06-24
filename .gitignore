@@ -75,3 +75,6 @@ desktop.ini
 *.orig
 .venv/
 .env
+
+# claude code
+.claude/ 
