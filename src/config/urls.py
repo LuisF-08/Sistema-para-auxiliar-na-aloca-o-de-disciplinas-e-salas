@@ -4,7 +4,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('pessoas/', include('pessoas.urls')),
-    path('academico/', include('academico.urls')),
-    path('relatorios/', include('relatorios.urls')),
+    path('pessoas/', include('pessoas.urls')),     # Conecta as rotas de professores
+    path('academico/', include('academico.urls')), # Conecta as rotas de turmas
 ]
