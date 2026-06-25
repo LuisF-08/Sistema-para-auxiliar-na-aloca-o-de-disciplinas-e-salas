@@ -16,6 +16,7 @@ def confirmar_alocacoes(modeladmin, request, queryset):
             modeladmin.message_user(request, erro, level=messages.ERROR)
     modeladmin.message_user(request, f"{total} alocação(ões) confirmada(s).")
 
+
 confirmar_alocacoes.short_description = "confirmar alocações"
 
 
@@ -26,6 +27,7 @@ def cancelar_alocacoes(modeladmin, request, queryset):
         alocacao.save()
         total += 1
     modeladmin.message_user(request, f"{total} alocação(ões) cancelada(s).")
+
 
 cancelar_alocacoes.short_description = "cancelar alocações"
 
@@ -46,7 +48,8 @@ class AlocacaoAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "periodo_letivo", "status", "horario__dia_semana",
-        "disciplina__curso", "sala__tipo_sala",
+        # "disciplina__curso",  # Comentado até o admin de Curso/academico estar pronto
+        "sala__tipo_sala",
     )
     search_fields = (
         "disciplina__nome", "disciplina__codigo", "professor__nome",
