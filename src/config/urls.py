@@ -12,3 +12,4 @@ urlpatterns = [
     path('alocacao/', include('alocacao.urls', namespace='alocacao')),
     path('relatorios/', include('relatorios.urls', namespace='relatorios')),
 ]
+

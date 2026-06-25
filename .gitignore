@@ -73,3 +73,5 @@ desktop.ini
 *.temp
 *.bak
 *.orig
+.venv/
+.env

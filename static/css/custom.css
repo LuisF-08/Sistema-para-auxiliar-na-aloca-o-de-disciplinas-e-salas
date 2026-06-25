@@ -308,3 +308,168 @@ body {
 .text-warning-soft { color: #856404; }
 
 .cursor-pointer { cursor: pointer; }
+
+/* ============================================================
+   SIDEBAR (Professores / Turmas / navegação lateral)
+   ============================================================ */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: #1a2744;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1030;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.sidebar-brand-icon {
+  width: 34px;
+  height: 34px;
+  background: var(--primary);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.sidebar-brand-text strong {
+  display: block;
+  color: #fff;
+  font-size: 14px;
+}
+
+.sidebar-brand-text span {
+  color: #8fa3c8;
+  font-size: 10px;
+}
+
+.sidebar-section-label {
+  color: #5a7299;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 14px 16px 6px;
+}
+
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  color: #8fa3c8 !important;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+}
+
+.sidebar .nav-link:hover {
+  color: #fff !important;
+  background: rgba(255,255,255,.05);
+}
+
+.sidebar .nav-link.active {
+  color: #fff !important;
+  background: rgba(13,110,253,.18);
+  border-left-color: var(--primary);
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sidebar-user strong {
+  display: block;
+  color: #fff;
+  font-size: 12px;
+}
+
+.sidebar-user span {
+  color: #8fa3c8;
+  font-size: 10px;
+}
+
+/* Conteúdo deslocado por causa da sidebar fixa */
+.main-with-sidebar {
+  margin-left: 220px;
+}
+
+.topbar {
+  background: var(--bg-card);
+  border-bottom: 0.5px solid var(--border);
+  padding: 14px 28px;
+}
+
+.topbar .breadcrumb-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.semestre-badge {
+  background: #eaf2ff;
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   BADGES SOFT (titulação / quantidade de alunos)
+   ============================================================ */
+.badge-soft-primary {
+  background: #eaf2ff;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+
+.badge-soft-success {
+  background: #d1e7dd;
+  color: #0a3622;
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 5px;
+  padding: 3px 8px;
+}

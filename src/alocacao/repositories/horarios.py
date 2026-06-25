@@ -1,5 +1,5 @@
 from alocacao.models import Horario
-from alocacao.selectors.alocacoes import alocacoes_ativas
+from alocacao.repositories.alocacoes import alocacoes_ativas
 
 
 def horarios_livres_para_turma(turma):

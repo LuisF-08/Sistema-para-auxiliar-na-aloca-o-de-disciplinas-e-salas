@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum  # sum e usado no clean() para calcular carga horaria
 
 
 STATUS_ATIVOS_ALOCACAO = ["planejada", "confirmada"]
@@ -126,3 +126,145 @@ class Alocacao(models.Model):
             models.Index(fields=["periodo_letivo", "professor", "horario"], name="aloc_prof_horario_idx"),
             models.Index(fields=["periodo_letivo", "turma", "horario"], name="aloc_turma_horario_idx"),
         ]
+
+    def __str__(self):
+        return f"alocacao #{self.pk or 'nova'} [{self.status}]"
+
+    def clean(self):
+        """valida regras de negocio que o banco nao consegue checar sozinho."""
+        # pessoas.models so e importado aqui para evitar importacao circular no nivel do modulo
+        from pessoas.models import DisponibilidadeProfessor
+
+        erros = {}
+
+        # o periodo letivo da turma precisa ser o mesmo da alocacao
+        if (
+            self.periodo_letivo_id
+            and self.turma_id
+            and self.turma.periodo_letivo_id != self.periodo_letivo_id
+        ):
+            erros["periodo_letivo"] = [
+                "o periodo letivo informado e diferente do periodo da turma."
+            ]
+
+        # as validacoes abaixo so se aplicam a alocacoes que geram ocupacao real
+        if self.status in STATUS_ATIVOS_ALOCACAO:
+            erros_sala = []
+            erros_professor = []
+
+            # numero de alunos da turma nao pode superar a capacidade da sala
+            if self.turma_id and self.sala_id:
+                if self.turma.numero_alunos > self.sala.capacidade_alunos:
+                    erros_sala.append(
+                        f"a turma tem {self.turma.numero_alunos} alunos, "
+                        f"mas a sala comporta apenas {self.sala.capacidade_alunos}."
+                    )
+
+            # sala nao pode ter duas aulas ativas no mesmo periodo/horario
+            if self.sala_id and self.horario_id and self.periodo_letivo_id:
+                qs = Alocacao.objects.filter(
+                    sala_id=self.sala_id,
+                    horario_id=self.horario_id,
+                    periodo_letivo_id=self.periodo_letivo_id,
+                    status__in=STATUS_ATIVOS_ALOCACAO,
+                )
+                if self.pk:
+                    qs = qs.exclude(pk=self.pk)
+                if qs.exists():
+                    erros_sala.append(
+                        "a sala ja possui uma aula ativa neste horario e periodo."
+                    )
+
+            # professor nao pode estar marcado como indisponivel neste horario
+            if self.professor_id and self.horario_id:
+                if DisponibilidadeProfessor.objects.filter(
+                    professor_id=self.professor_id,
+                    horario_id=self.horario_id,
+                    disponivel=False,
+                ).exists():
+                    erros_professor.append(
+                        "o professor esta marcado como indisponivel neste horario."
+                    )
+
+            # professor nao pode ter duas aulas ativas no mesmo periodo/horario
+            if self.professor_id and self.horario_id and self.periodo_letivo_id:
+                qs = Alocacao.objects.filter(
+                    professor_id=self.professor_id,
+                    horario_id=self.horario_id,
+                    periodo_letivo_id=self.periodo_letivo_id,
+                    status__in=STATUS_ATIVOS_ALOCACAO,
+                )
+                if self.pk:
+                    qs = qs.exclude(pk=self.pk)
+                if qs.exists():
+                    erros_professor.append(
+                        "o professor ja possui uma aula ativa neste horario e periodo."
+                    )
+
+            # turma nao pode ter duas aulas ativas no mesmo periodo/horario
+            if self.turma_id and self.horario_id and self.periodo_letivo_id:
+                qs = Alocacao.objects.filter(
+                    turma_id=self.turma_id,
+                    horario_id=self.horario_id,
+                    periodo_letivo_id=self.periodo_letivo_id,
+                    status__in=STATUS_ATIVOS_ALOCACAO,
+                )
+                if self.pk:
+                    qs = qs.exclude(pk=self.pk)
+                if qs.exists():
+                    erros["turma"] = [
+                        "a turma ja possui uma aula ativa neste horario e periodo."
+                    ]
+
+            # sala precisa possuir todos os recursos exigidos pela disciplina
+            if self.disciplina_id and self.sala_id:
+                ids_exigidos = set(
+                    self.disciplina.recursos_necessarios.values_list("id", flat=True)
+                )
+                if ids_exigidos:
+                    ids_sala = set(self.sala.recursos.values_list("id", flat=True))
+                    ids_faltantes = ids_exigidos - ids_sala
+                    if ids_faltantes:
+                        nomes = ", ".join(
+                            self.disciplina.recursos_necessarios
+                            .filter(id__in=ids_faltantes)
+                            .values_list("nome", flat=True)
+                        )
+                        erros_sala.append(
+                            f"a sala nao possui os recursos exigidos: {nomes}."
+                        )
+
+            # professor nao pode ultrapassar a carga horaria maxima no periodo
+            if self.professor_id and self.disciplina_id and self.periodo_letivo_id:
+                qs = Alocacao.objects.filter(
+                    professor_id=self.professor_id,
+                    periodo_letivo_id=self.periodo_letivo_id,
+                    status__in=STATUS_ATIVOS_ALOCACAO,
+                )
+                # ao editar, descontar a propria linha para nao contar em duplicata
+                if self.pk:
+                    qs = qs.exclude(pk=self.pk)
+                carga_atual = (
+                    qs.aggregate(total=Sum("disciplina__carga_horaria_semanal"))
+                    .get("total") or 0
+                )
+                nova_carga = self.disciplina.carga_horaria_semanal
+                if carga_atual + nova_carga > self.professor.carga_horaria_maxima:
+                    erros_professor.append(
+                        f"professor ja acumula {carga_atual}h no periodo; "
+                        f"adicionar {nova_carga}h ultrapassaria o limite de "
+                        f"{self.professor.carga_horaria_maxima}h/semana."
+                    )
+
+            if erros_sala:
+                erros["sala"] = erros_sala
+            if erros_professor:
+                erros["professor"] = erros_professor
+
+        if erros:
+            raise ValidationError(erros)
+
+    def save(self, *args, **kwargs):
+        """garante que as regras de negocio sao sempre validadas antes de salvar."""
+        self.full_clean()
+        super().save(*args, **kwargs)
