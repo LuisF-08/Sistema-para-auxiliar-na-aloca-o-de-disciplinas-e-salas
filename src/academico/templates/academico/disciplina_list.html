@@ -2,31 +2,94 @@
 {% load static %}
     {% block content %} 
         
-        <div class="d-flex justify-content-between align-items-center mb-3">
-         <h4>Disciplinas</h4>
-          <a href="#" class="btn btn-primary">
-            + Novo registro
-            </a>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-0" style="color: #0f172a; font-size: 1.75rem;">Disciplinas</h2>
+                <p class="text-secondary mb-0" style="font-size: 0.875rem;">{{ disciplinas|length }} registros cadastrados</p>
+            </div>
+            <button type="button" class="btn btn-primary" style="background-color: #1e293b; border-radius: 6px; font-weight: 500; border: none;" data-bs-toggle="modal" data-bs-target="#modalDisciplina">
+                 + Novo registro
+            </button>
+        </div>
+        <div class="mb-4" style="max-width: 100%;">
+                <input type="text" class="form-control bg-white border rounded-3 px-3 py-2" placeholder="🔍 Buscar disciplinas..." style="border-color: #e2e8f0; font-size: 0.9rem;">
         </div>        
-        <table class="table table-hover">
+        <table class="table table-borderless table-hover align-middle" style="border-collapse: separate; border-spacing: 0 10px;">
             <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Nome</th>
-                </tr>
+                <tr class="text-secondary" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                     <th class="ps-3">Código</th>
+                     <th>Nome</th>
+                     <th>Curso</th>
+                    <th>Carga Horária (h)</th>
+                     <th class="text-end pe-4">Ações</th>
+                 </tr>
             </thead>
             <tbody>
                 {% for disciplina in disciplinas %}
-            <tr>
-                <td>{{ disciplina.codigo }}</td>
-                <td>{{ disciplina.nome }}</td>
+            <tr class="bg-white rounded-3 shadow-sm" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;">
+                <td class="ps-3 fw-normal text-secondary">{{ disciplina.codigo }}</td>
+                <td class="fw-bold text-dark">{{ disciplina.nome }}</td>
+                <td class="text-secondary">{{ disciplina.curso.nome }}</td>
+                <td>
+                     <span class="badge rounded-pill px-3 py-1" style="background-color: #e0e7ff; color: #4338ca; font-weight: 600;">
+                        {{ disciplina.carga_horaria|default:"0" }}h
+                    </span>
+                </td>
+                <td class="text-end py-3 pe-4">
+                    <a href="#" class="text-decoration-none me-3" title="Editar" style="font-size: 1.1rem; filter: brightness(0) opacity(0.4);">✏️</a>
+                    <a href="#" class="text-decoration-none" title="Excluir" style="font-size: 1.1rem; filter: brightness(0) opacity(0.4);">🗑️</a>
+                </td>
             </tr>
                 {% empty %}
             <tr>
-                <td colspan="5">Nenhuma disciplina cadastrada.</td>
+                <td colspan="6">Nenhuma disciplina cadastrada.</td>
             </tr>
                  {% endfor %}
     </tbody>
   </table>
+  <div class="modal fade" id="modalDisciplina" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4 shadow-lg border-0 p-3">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Nova Disciplina</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Código <span class="text-danger">*</span></label>
+                <input type="text" class="form-control bg-light border-0 rounded-3" placeholder="Ex: CC-101" style="padding: 0.75rem 1rem;">
+            </div>
+            <div class="mb-3">
+                     <label class="form-label fw-bold">Nome <span class="text-danger">*</span></label>
+                     <input type="text" class="form-control bg-light border-0 rounded-3" placeholder="Ex: Estruturas de Dados" style="padding: 0.75rem 1rem;">
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-7">
+                     <label class="form-label fw-bold">Curso <span class="text-danger">*</span></label>
+                     <select class="form-select bg-light border-0 rounded-3" style="padding: 0.75rem 1rem;">
+                        <option selected>Selecione...</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Carga Horária (h) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control bg-light border-0 rounded-3" placeholder="Ex: 60" style="padding: 0.75rem 1rem;">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-7">
+                     <label class="form-label fw-bold">Periodo</label>
+                     <select class="form-select bg-light border-0 rounded-3" style="padding: 0.75rem 1rem;">
+                        <option selected>Selecione...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-between px-0">
+                <button type="button" class="btn btn-outline-secondary rounded-3 px-4 py-2" data-bs-dismiss="modal" style="width: 48%;">Cancelar</button>
+                <button type="button" class="btn text-white rounded-3 px-4 py-2" style="background-color: #1a365d; width: 48%;">Criar registro</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 

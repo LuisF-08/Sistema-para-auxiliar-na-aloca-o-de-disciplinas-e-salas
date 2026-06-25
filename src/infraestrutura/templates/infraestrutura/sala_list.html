@@ -1,1 +1,105 @@
-{% extends 'base.html' %}{% block content %}<h4>Salas</h4>{% endblock %}
+{% extends 'base.html' %}
+{% load static %}
+    {% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0" style="color: #0f172a; font-size: 1.75rem;">Salas</h2>
+            <p class="text-secondary mb-0" style="font-size: 0.875rem;">{{ salas|length }} registros cadastrados</p>
+        </div>
+          <button type="button" class="btn btn-primary" style="background-color: #1e293b; border-radius: 6px; font-weight: 500; border: none;" data-bs-toggle="modal" data-bs-target="#modalSala">
+            + Novo registro
+        </button>
+    </div>
+    <div class="mb-4" style="max-width: 100%;">
+                <input type="text" class="form-control bg-white border rounded-3 px-3 py-2" placeholder="🔍 Buscar Salas..." style="border-color: #e2e8f0; font-size: 0.9rem;">
+    </div>        
+
+    <table class="table table-borderless table-hover align-middle" style="border-collapse: separate; border-spacing: 0 10px;">
+        <thead>
+            <tr class="text-secondary" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            <th class="ps-3">Identificação</th>
+            <th>Bloco</th>
+            <th>Tipo</th>
+            <th>Capacidade</th>
+            <th class="text-end pe-4">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sala in salas %}
+                <tr class="bg-white rounded-3 shadow-sm" style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;">
+                    <td class="ps-3 py-3 fw-bold text-dark">{{ sala.nome }}</td>
+    
+                    <td class="py-3 text-secondary">{{ sala.localizacao }}</td>
+    
+                    <td class="py-3 text-secondary">{{ sala.tipo_sala }}</td>
+    
+                    <td class="py-3">
+                        <span class="badge rounded-pill px-3 py-1" style="background-color: #e0e7ff; color: #4338ca; font-weight: 600;">
+                            {{ sala.capacidade_alunos|default:"0" }} lugares
+                        </span>
+                    </td>
+    
+                    <td class="text-end py-3 pe-4">
+                        <a href="#" class="text-decoration-none me-3" title="Editar" style="font-size: 1.1rem; filter: brightness(0) opacity(0.4);">✏️</a>
+                        <a href="#" class="text-decoration-none" title="Excluir" style="font-size: 1.1rem; filter: brightness(0) opacity(0.4);">🗑️</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                     <td colspan="5" class="text-center text-secondary py-4 bg-white rounded-3 shadow-sm">
+                        Nenhuma sala cadastrada.
+                     </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="modal fade" id="modalSala" tabindex="-1" aria-labelledby="modalSalaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="modalSalaLabel" style="color: #0f172a;">Nova Sala</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form method="POST" action="">
+                {% csrf_token %}
+                
+                <div class="modal-body px-4 pb-0">
+                    <div class="mb-3">
+                         <label for="nome" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Identificação / Nome</label>
+                         <input type="text" class="form-control rounded-3" id="nome" name="nome" placeholder="Ex: A-101, Lab-3" required style="font-size: 0.9rem; padding: 0.6rem 0.75rem; border-color: #e2e8f0;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="localizacao" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Localização (Bloco)</label>
+                        <input type="text" class="form-control rounded-3" id="localizacao" name="localizacao" placeholder="Ex: Bloco A, Laboratórios" required style="font-size: 0.9rem; padding: 0.6rem 0.75rem; border-color: #e2e8f0;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo_sala" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Tipo de Sala</label>
+                        <select class="form-select rounded-3" id="tipo_sala" name="tipo_sala" required style="font-size: 0.9rem; padding: 0.6rem 0.75rem; border-color: #e2e8f0;">
+                            <option value="" disabled selected>Selecione o tipo...</option>
+                            <option value="comum">Sala de Aula Comum</option>
+                            <option value="laboratorio">Laboratório</option>
+                            <option value="auditorio">Auditório</option>
+                            <option value="online">Online / Remota</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                         <label for="capacidade_alunos" class="form-label fw-semibold text-secondary" style="font-size: 0.85rem;">Capacidade (Alunos)</label>
+                         <input type="number" class="form-control rounded-3" id="capacidade_alunos" name="capacidade_alunos" min="1" placeholder="Ex: 30" required style="font-size: 0.9rem; padding: 0.6rem 0.75rem; border-color: #e2e8f0;">
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 p-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 6px; font-weight: 500;">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn text-white px-4" style="background-color: #1e293b; border-radius: 6px; font-weight: 500; border: none;">Salvar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+ {% endblock %}
