@@ -1,13 +1,15 @@
 """Root URL configuration."""
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('pessoas/', include('pessoas.urls')),
-    path('academico/', include('academico.urls')),
-    path('relatorios/', include('relatorios.urls')),
-    path('api/', include('api.urls')),
-    path('pessoas/', include('pessoas.urls')),     # Conecta as rotas de professores
-    path('academico/', include('academico.urls')), # Conecta as rotas de turmas
+    path('', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+    path('academico/', include('academico.urls', namespace='academico')),
+    path('pessoas/', include('pessoas.urls', namespace='pessoas')),
+    path('infraestrutura/', include('infraestrutura.urls', namespace='infraestrutura')),
+    path('alocacao/', include('alocacao.urls', namespace='alocacao')),
+    path('relatorios/', include('relatorios.urls', namespace='relatorios')),
 ]
+

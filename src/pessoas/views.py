@@ -2,6 +2,8 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView, DeleteView
 from .models import Professor
 
+def professor_list(request):
+    return render(request, 'pessoas/professor_list.html', {})
 class ProfessorCreateView(CreateView):
     model = Professor
     fields = '__all__'

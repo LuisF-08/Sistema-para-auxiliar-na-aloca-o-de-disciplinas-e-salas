@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}Professores{% endblock %}
+{% block breadcrumb %}Professores{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <div>
+    <h1 class="page-title mb-1">Professores</h1>
+    <small class="text-muted">{{ professores|length }} registro{{ professores|length|pluralize }} cadastrado{{ professores|length|pluralize }}</small>
+  </div>
+  <button type="button" class="btn btn-dark-navy" data-bs-toggle="modal" data-bs-target="#modalProfessor" onclick="abrirModalCriar()">
+    + Novo registro
+  </button>
+</div>
+
+<div class="mb-3">
+  <input
+    type="text"
+    id="searchInput"
+    class="form-control"
+    placeholder="Buscar professores..."
+    oninput="filtrarTabela()"
+  >
+</div>
+
+<div class="card card-soft">
+  <div class="table-responsive">
+    <table class="table table-soft align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Especialidade</th>
+          <th>Carga Horária Máx.</th>
+          <th>Status</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaBody">
+        {% for professor in professores %}
+        <tr>
+          <td><strong>{{ professor.nome }}</strong></td>
+          <td class="text-muted">{{ professor.email|default:"—" }}</td>
+          <td>{{ professor.especialidade|default:"—" }}</td>
+          <td>{{ professor.carga_horaria_maxima }}h</td>
+          <td>
+            {% if professor.ativo %}
+              <span class="badge-soft-success">Ativo</span>
+            {% else %}
+              <span class="badge-soft-secondary">Inativo</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <button
+              type="button"
+              class="btn btn-icon-outline me-1"
+              data-bs-toggle="modal"
+              data-bs-target="#modalProfessor"
+              data-id="{{ professor.pk }}"
+              data-nome="{{ professor.nome }}"
+              data-email="{{ professor.email|default:'' }}"
+              data-especialidade="{{ professor.especialidade|default:'' }}"
+              data-carga="{{ professor.carga_horaria_maxima }}"
+              data-ativo="{{ professor.ativo|yesno:'1,0' }}"
+              onclick="abrirModalEditar(this)"
+              title="Editar"
+            >
+              ✏️            
+            </button>
+            <button
+              type="button"
+              class="btn btn-icon-outline delete"
+              data-bs-toggle="modal"
+              data-bs-target="#modalExcluir"
+              data-id="{{ professor.pk }}"
+              data-nome="{{ professor.nome }}"
+              onclick="abrirModalExcluir(this)"
+              title="Excluir"
+            >
+              🗑️
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            Nenhum professor cadastrado ainda.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: CRIAR / EDITAR -->
+<div class="modal fade" id="modalProfessor" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalProfessorTitulo">Novo Professor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" id="formProfessor" action="{% url 'pessoas:professor_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="nome" id="campoNome" class="form-control" placeholder="Ex: Dr. João Silva" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">E-mail</label>
+            <input type="email" name="email" id="campoEmail" class="form-control" placeholder="joao.silva@exemplo.com">
+          </div>
+          <div class="row">
+            <div class="col-sm-7 mb-3">
+              <label class="form-label">Especialidade</label>
+              <input type="text" name="especialidade" id="campoEspecialidade" class="form-control" placeholder="Ex: Banco de Dados">
+            </div>
+            <div class="col-sm-5 mb-3">
+              <label class="form-label">Carga Máxima (h/sem)</label>
+              <input type="number" name="carga_horaria_maxima" id="campoCarga" class="form-control" min="1" required>
+            </div>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" name="ativo" id="campoAtivo" class="form-check-input" checked>
+            <label class="form-check-label" for="campoAtivo">Professor ativo</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-dark-navy">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAR EXCLUSÃO -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Excluir Professor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Você está prestes a excluir o professor <strong id="nomeExcluir"></strong>.</p>
+        <div class="alert alert-warning py-2 mb-0">Esta ação não pode ser desfeita.</div>
+      </div>
+      <div class="modal-footer">
+        <form method="post" id="formExcluir">
+          {% csrf_token %}
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Confirmar exclusão</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filtrarTabela() {
+    const termo = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#tabelaBody tr').forEach(linha => {
+      linha.style.display = linha.textContent.toLowerCase().includes(termo) ? '' : 'none';
+    });
+  }
+
+  function abrirModalCriar() {
+    document.getElementById('modalProfessorTitulo').textContent = 'Novo Professor';
+    document.getElementById('formProfessor').action = "{% url 'pessoas:professor_create' %}";
+    document.getElementById('formProfessor').reset();
+    document.getElementById('campoAtivo').checked = true;
+  }
+
+  function abrirModalEditar(botao) {
+    const id = botao.dataset.id;
+    document.getElementById('modalProfessorTitulo').textContent = 'Editar Professor';
+    document.getElementById('formProfessor').action = `/pessoas/professores/${id}/editar/`;
+    document.getElementById('campoNome').value = botao.dataset.nome;
+    document.getElementById('campoEmail').value = botao.dataset.email;
+    document.getElementById('campoEspecialidade').value = botao.dataset.especialidade;
+    document.getElementById('campoCarga').value = botao.dataset.carga;
+    document.getElementById('campoAtivo').checked = botao.dataset.ativo === '1';
+  }
+  
+  function abrirModalExcluir(botao) {
+    document.getElementById('nomeExcluir').textContent = botao.dataset.nome;
+    document.getElementById('formExcluir').action = `/pessoas/professores/${botao.dataset.id}/excluir/`;
+  }
+</script>
+{% endblock %}
