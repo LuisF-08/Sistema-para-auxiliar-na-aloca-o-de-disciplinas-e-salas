@@ -25,6 +25,7 @@ Django 5.2 · PostgreSQL 17 · Python 3.14
 16. [Pontos de atenção e melhorias sugeridas](#16-pontos-de-atenção-e-melhorias-sugeridas)
 17. [Alterações realizadas nesta sessão](#17-alterações-realizadas-nesta-sessão)
 18. [Próximos passos recomendados](#18-próximos-passos-recomendados)
+19. [Revisão geral, ambiente e testes (branch feature/testes-e-correcoes-ambiente)](#19-revisão-geral-ambiente-e-testes-branch-featuretestes-e-correcoes-ambiente)
 
 ---
 
@@ -78,8 +79,8 @@ projeto/
     │   ├── models.py
     │   ├── admin.py
     │   └── migrations/
-    ├── relatorios/               ← stub — ainda não implementado
-    └── api/                      ← stub — ainda não implementado
+    ├── relatorios/               ← dashboard, relatorios e exportacao (csv/pdf)
+    └── api/                      ← api rest (dj rest framework), conectada em config/urls.py
         ├── views/
         └── serializers/
 ```
@@ -94,8 +95,10 @@ Cada app representa um **domínio de negócio** independente:
 | `infraestrutura` | O espaço físico: o que está disponível (salas e recursos) |
 | `pessoas` | Os atores humanos: quem ensina e quem aprende |
 | `alocacao` | A operação central: juntar tudo num horário válido |
-| `relatorios` | Visões consolidadas (não implementado) |
-| `api` | Interface REST externa (não implementado) |
+| `relatorios` | dashboard e relatorios (ocupação, professores, grade, export csv/pdf) |
+| `api` | interface REST (viewsets do DRF, ver seção 14) |
+
+> nota: essa tabela e o diagrama acima tavam desatualizados — diziam "não implementado" pra `relatorios` e `api`, mas os dois já tem bastante código funcionando. corrigido na sessão da seção 19.
 
 ---
 
@@ -663,7 +666,10 @@ python manage.py migrate
 ## 13. Testes automatizados
 
 ```bash
-# rodar todos os testes do app alocacao
+# rodar tudo, app por app (necessario por causa do layout de pastas, ver aviso abaixo)
+python manage.py test academico infraestrutura pessoas alocacao relatorios
+
+# rodar so um app
 python manage.py test alocacao
 
 # com detalhes
@@ -672,38 +678,47 @@ python manage.py test alocacao --verbosity=2
 
 > Os testes precisam de PostgreSQL ativo — o Django cria e destrói um banco de testes temporário.
 
+> **atenção — `python manage.py test` sem argumento acha 0 testes.** o codigo do projeto mora em `src/`, mas `src/` n é um pacote python (n tem `__init__.py` e nunca teve a intenção de ser importado como `src.alocacao`, etc). o `manage.py` so funciona pq insere `src/` direto no `sys.path`. só que a descoberta automatica de testes do Django (`DiscoverRunner`), quando não recebe nenhum app_label, varre a partir do diretório onde o `manage.py` roda (a raiz do repo) — e lá não tem nenhum teste, só o `src/`. por isso sempre roda passando os apps explicitamente (`python manage.py test academico infraestrutura pessoas alocacao relatorios`), é assim que ta documentado acima. isso foi encontrado e confirmado na sessão da seção 19; não fizemos a mudança estrutural (mover `manage.py` pra dentro de `src/`, por ex.) pq é mais invasivo do que o escopo pedido — fica registrado como sugestão pra próxima sessão.
+
 ### Cobertura dos testes
 
-| Categoria | O que é testado |
+| App | O que é testado |
 |---|---|
-| Model | alocação válida salva; conflito de sala, professor, turma; capacidade; disponibilidade; recursos; carga horária |
-| Período | conflito só ocorre no mesmo período; período da alocação deve coincidir com o da turma |
-| Status | alocação cancelada não gera conflito; horário fim > início |
-| Services | `criar_alocacao`, `cancelar_alocacao` |
-| Repositories | `carga_horaria_professor`, `salas_livres`, `horarios_livres_para_turma`, `ocupacao_por_sala` |
-| Conflitos | `mapear_conflitos` retorna chave `"sala"` corretamente |
+| `alocacao` | alocação válida salva; conflito de sala, professor, turma; capacidade; disponibilidade; recursos; carga horária; período; status; services (`criar_alocacao`, `cancelar_alocacao`); repositories; `mapear_conflitos` |
+| `academico` | unicidade de `Curso` (nome/código); constraints de `PeriodoLetivo` (semestre 1/2, datas, unicidade ano+semestre); unicidade de `Disciplina` por curso; view `disciplina_list` |
+| `infraestrutura` | unicidade de `RecursoSala`/`Sala`; capacidade mínima; relação m2m sala↔recurso; view `sala_list` |
+| `pessoas` | unicidade de e-mail do `Professor`; constraint `turma_unica_por_periodo`; constraint de `DisponibilidadeProfessor`; cascade ao apagar professor; views de listagem/criação de professor (inclui teste de regressão do bug corrigido, ver seção 19) |
+| `relatorios` | funções de cálculo (`calcular_taxa_ocupacao`, `calcular_eficiencia_espaco`, `calcular_horarios_pico`, `detectar_conflitos_ativos`); views de dashboard/relatórios/grade; exportação csv e pdf |
+
+> nota sobre `detectar_conflitos_ativos`: essa função busca duplicatas de sala/horário e professor/horário nas alocações ativas, mas os índices únicos parciais do banco (seção 7) já impedem que essas duplicatas existam de verdade — então na prática ela sempre vai retornar `0` conflitos enquanto os índices tiverem no lugar. o teste cobre só o caminho feliz por isso; é mais uma rede de segurança (caso os índices sejam removidos um dia) do que um cenário alcançável hoje.
 
 ---
 
-## 14. API REST (estrutura futura)
+## 14. API REST
 
-O app `api/` existe mas está completamente vazio — apenas a estrutura de pastas preparada.
+A API REST (Django REST Framework) já tinha as views, serializers e o router prontos em `src/api/`, mas nunca tinha sido conectada no `urls.py` principal — corrigido na sessão da seção 19.
 
 ```
 api/
-├── permisions.py        ← classes de permissão (a implementar)
-├── urls.py              ← rotas da API (a implementar)
+├── urls.py              ← router do DRF com professores, horarios, alocacoes, salas
 ├── serializers/
-│   ├── alocacao.py      ← serializer de Alocacao (a implementar)
+│   ├── alocacao.py
 │   ├── horario.py
 │   ├── professor.py
 │   └── sala.py
 └── views/
-    ├── alocacao.py      ← view de Alocacao (a implementar)
+    ├── alocacao.py
     ├── horario.py
     ├── professor.py
     └── sala.py
 ```
+
+Endpoints disponíveis (todos exigem usuário autenticado, via `IsAuthenticated` + `DEFAULT_PERMISSION_CLASSES`):
+
+- `/api/professores/`
+- `/api/horarios/`
+- `/api/alocacoes/`
+- `/api/salas/`
 
 A arquitetura em camadas facilita a implementação — as views da API apenas chamam os services, que chamam os repositórios:
 
@@ -795,17 +810,15 @@ Em ambientes com múltiplos usuários simultâneos, duas requisições podem pas
 
 ---
 
-### App `relatorios` não implementado
+### ~~App `relatorios` não implementado~~ — resolvido
 
-**Sugestão:** implementar pelo menos uma view de ocupação por sala e carga por professor usando os repositórios existentes (`ocupacao_por_sala`, `carga_horaria_professor`).
+Já tem dashboard, relatório de professores, de salas, de grade e exportação csv/pdf (ver seção 2). Só faltava cobertura de teste, que foi adicionada na seção 19.
 
 ---
 
-### API REST não implementada
+### ~~API REST não implementada~~ — resolvido (parcialmente)
 
-Toda interação hoje passa pelo Django Admin. Sem API, não é possível integrar com apps mobile, frontends React/Vue ou sistemas externos.
-
-**Sugestão:** implementar os serializers e views em `api/` usando Django REST Framework, aproveitando a camada de services já existente.
+As views/serializers/router do DRF já existiam, só n tavam conectadas no `urls.py` principal — conectado na sessão da seção 19. Ainda falta: autenticação além de session/basic auth (token ou JWT, pra fazer sentido um app mobile/frontend externo consumir), paginação nos endpoints, e testes automatizados da api em si (só testamos que ela exige autenticação e que o router responde).
 
 ---
 
@@ -1005,7 +1018,89 @@ python manage.py test alocacao --verbosity=2
 
 ### Próximas implementações sugeridas
 
-1. **API REST** — implementar `api/views/` e `api/serializers/` com Django REST Framework
-2. **Relatórios** — usar `ocupacao_por_sala` e `carga_horaria_professor` para gerar visões consolidadas
-3. **Manager de soft-delete** — evitar `.filter(ativo=True)` espalhado por todo o código
-4. **`TimeStampedModel` centralizado** — mover para `src/core/models.py`
+1. **Manager de soft-delete** — evitar `.filter(ativo=True)` espalhado por todo o código
+2. **`TimeStampedModel` centralizado** — mover para `src/core/models.py`
+3. **Autenticação da API** — hoje é só session/basic auth do DRF; avaliar token ou JWT se algum client externo (mobile, frontend separado) for consumir
+4. **Testes automatizados da própria API REST** — os testes atuais cobrem os apps de domínio, mas não os endpoints do DRF em si (serializers, viewsets, permissões por método)
+5. **Comando `seed_alocacao`** — citado em `docs/modelo-dados.md` mas nunca foi implementado; ou implementa ou tira a referência (ver seção 19)
+
+Ver seção 19 pra tudo que já foi revisado, corrigido e testado nessa sessão.
+
+---
+
+## 19. Revisão geral, ambiente e testes (branch `feature/testes-e-correcoes-ambiente`)
+
+Essa seção documenta a revisão completa do projeto feita antes de começar a codar qualquer coisa nova: análise do projeto inteiro, conferência das dependências, montagem do ambiente local, e depois os bugs achados e corrigidos + testes adicionados. O foco de banco de dados dessa sessão ficou por conta da revisão manual (models, constraints, migrations já eram sólidos e n precisaram de mudança); o resto (ambiente, bugs, testes, docs) foi tocado nessa branch.
+
+### Ambiente — o que foi configurado na máquina
+
+- venv criado em `.venv/` com Python 3.14.3
+- dependências do `requirements.txt` instaladas + as duas que faltavam nele (ver abaixo)
+- PostgreSQL 17 rodando via Docker (`docker run --name alocacao_postgres -e POSTGRES_DB=alocacao_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17`) — Docker Desktop já tava instalado, só precisou ser iniciado
+- `.env` local criado (não vai pro git) com `SECRET_KEY` gerada e as credenciais do container acima
+- `migrate` rodado com sucesso contra o Postgres real — os índices únicos parciais da seção 7 foram confirmados funcionando no banco de verdade, não só na migration
+
+### `requirements.txt` — dependências que faltavam
+
+O arquivo listava só `Django`, `psycopg[binary]`, `python-decouple` e `reportlab`, mas o código já importava (e precisava de) mais duas coisas que nunca foram adicionadas:
+
+```python
+# src/config/settings.py
+from dotenv import load_dotenv   # precisa de python-dotenv
+
+# INSTALLED_APPS
+'rest_framework',                 # precisa de djangorestframework
+```
+
+Um `pip install -r requirements.txt` limpo (ambiente novo, sem nada instalado antes) quebrava na hora de subir o servidor. Adicionado `djangorestframework>=3.15` e `python-dotenv>=1.0` no arquivo.
+
+### `.env.example` — criado
+
+Não existia nenhum, apesar do `.gitignore` já prever `.env.example`/`.env.sample` como exceção. Criado na raiz com todas as variáveis que `settings.py` exige (`SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`) e comentários de como gerar a secret key.
+
+### Bugs encontrados e corrigidos
+
+Todos esses foram achados rodando o projeto de verdade (check, migrate, suite de testes) e não só lendo o código — por isso a suite de testes cresceu junto com a correção, cada bug ganhou um teste de regressão.
+
+| # | Arquivo | Bug | Sintoma |
+|---|---|---|---|
+| 1 | `src/alocacao/tests/` | faltava `__init__.py` | `python manage.py test` (ou `test alocacao`) achava **0 testes**, mesmo com 19 testes prontos e passando. o diretório não era reconhecido como pacote python. |
+| 2 | `src/pessoas/views.py` | `professor_list` chamava `render(...)` sem importar `render` de `django.shortcuts` | `NameError` — a página de listagem de professores quebrava sempre que alguém acessava `/pessoas/professores/` |
+| 3 | `src/pessoas/views.py` e `src/academico/views.py` | `success_url = reverse_lazy('professor_create')` / `reverse_lazy('turma_create')` sem o namespace do app | `NoReverseMatch` — criar, editar ou excluir um professor/turma salvava certinho no banco, mas quebrava na hora do redirect de sucesso. corrigido pra `reverse_lazy('pessoas:professor_create')` e `reverse_lazy('academico:turma_create')` |
+| 4 | `src/api/serializers/*.py` (4 arquivos) | `from dataclasses import fields` — import morto, sobrou de algum copia-e-cola, não tem nada a ver com DRF | nenhum erro (import válido, só não usado), mas é lixo no código — removido |
+| 5 | `src/config/urls.py` | rotas da api (`src/api/urls.py`, router do DRF já pronto com professores/horarios/alocacoes/salas) nunca foram incluídas | api inteira ficava inacessível (404 em qualquer `/api/...`), apesar do código todo já existir. adicionado `path('api/', include('api.urls'))` |
+
+O bug #3 é o mais sério dos achados: ele só aparece depois que o formulário é validado e salvo com sucesso, então testes manuais rápidos ("abri a tela, o formulário existe") não pegam — só apareceu rodando um teste de POST de verdade.
+
+### Testes adicionados
+
+Antes só o app `alocacao` tinha teste de verdade (19 testes); `academico`, `infraestrutura`, `pessoas` e `relatorios` tinham só o stub padrão do django (`# Create your tests here.`). Total agora: **66 testes**, todos passando contra o Postgres real.
+
+| App | Testes | Cobre |
+|---|---|---|
+| `academico` | 11 | constraints de `Curso`, `PeriodoLetivo`, `Disciplina`; view de listagem |
+| `infraestrutura` | 7 | constraints de `RecursoSala`, `Sala`; relação m2m com recursos; view de listagem |
+| `pessoas` | 12 | constraints de `Professor`, `Turma`, `DisponibilidadeProfessor`; cascade; views (regressão dos bugs #2 e #3) |
+| `relatorios` | 17 | funções de cálculo do dashboard; todas as views; exportação csv/pdf |
+| `alocacao` | 19 | já existia, sem mudança de conteúdo (só ganhou o `__init__.py` do bug #1) |
+
+```bash
+# como rodar tudo (precisa do postgres ativo, ver seção 4)
+python manage.py test academico infraestrutura pessoas alocacao relatorios --verbosity=2
+```
+
+### Observações que não viraram mudança de código (fora do escopo dessa sessão)
+
+- **`python manage.py test` sem app_label acha 0 testes** — é do jeito que o `src/` foi estruturado (não é pacote python, só entra no `sys.path` via `manage.py`). daria pra resolver movendo o `manage.py` pra dentro de `src/` ou configurando um `pytest.ini`/`pyproject.toml` com `rootdir`, mas é uma mudança estrutural maior do que o pedido — documentado na seção 13 e aqui como sugestão.
+- **`detectar_conflitos_ativos` (relatorios/views.py) nunca acha conflito de verdade** — os índices únicos parciais (seção 7) impedem que uma sala/professor tenha duas alocações ativas no mesmo horário, então a checagem de duplicata dessa função é inalcançável enquanto os índices existirem. não é bug, só uma observação (documentado na seção 13).
+- **`docs/modelo-dados.md` cita um comando `seed_alocacao`** que não existe no código — não criamos o comando (não foi pedido), só deixamos registrado que a doc tá na frente do código nesse ponto.
+- **`load_dotenv()` + `python-decouple` juntos em `settings.py`** — meio redundante (o decouple já lê o `.env` sozinho), mas funciona e não foi mexido pra não ficar fazendo mudança sem necessidade.
+
+### Resultado final da sessão
+
+| Comando | Resultado |
+|---|---|
+| `python manage.py check` | `System check identified no issues (0 silenced)` |
+| `python manage.py makemigrations --check --dry-run` | `No changes detected` |
+| `python manage.py migrate` (contra Postgres 17 real, via Docker) | todas as migrations aplicadas sem erro |
+| `python manage.py test academico infraestrutura pessoas alocacao relatorios` | **66 testes, todos passando** |

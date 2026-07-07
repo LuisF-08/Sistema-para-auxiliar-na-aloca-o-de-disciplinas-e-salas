@@ -192,10 +192,12 @@ eles concentram consultas reutilizaveis:
 
 ## seed
 
+> **atenção:** esse comando ainda n existe no codigo (n tem `management/commands/` em nenhum app). fica registrado aqui como proposta, n como algo que já funciona. quem for implementar, o objetivo e esse:
+
 para criar dados simulados:
 
 ```powershell
 .venv\Scripts\python manage.py seed_alocacao
 ```
 
-o comando e idempotente: pode rodar mais de uma vez sem duplicar a base principal.
+a ideia e o comando ser idempotente: rodar mais de uma vez sem duplicar a base principal.
