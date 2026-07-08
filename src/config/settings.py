@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'academico',
     'pessoas',
     'infraestrutura',
@@ -104,9 +105,18 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Validação para a API pelo Django
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ]
+}
+
+# Criação do swagger via spectacular
+SPECTACULAR_SETTINGS = {
+    "TITLE": "API - Sistema de Alocação de Disciplinas e Salas",
+    "DESCRIPTION": "Documentação da API do sistema de alocação.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 

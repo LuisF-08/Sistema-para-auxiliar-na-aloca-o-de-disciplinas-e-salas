@@ -1,424 +1,316 @@
-# Documentação Inicial da API - Sistema de Alocação de Disciplinas e Salas
+# Documentação da API - Sistema de Alocação de Disciplinas e Salas
 
 ## Objetivo
 
-A API tem como objetivo disponibilizar os dados do sistema para integração entre frontend, backend, dashboards e futuras aplicações externas.
-
-A API seguirá o padrão REST utilizando Django REST Framework (DRF).
+A API foi desenvolvida utilizando **Django REST Framework (DRF)** e tem como objetivo disponibilizar os dados do sistema para integração entre frontend, backend e futuras aplicações externas.
 
 ---
 
 # Arquitetura
 
 ```text
-Request
-   ↓
-APIView
-   ↓
+Cliente
+    ↓
+ViewSet (DRF)
+    ↓
 Service
-   ↓
+    ↓
 Repository
-   ↓
+    ↓
 Model
-   ↓
+    ↓
 PostgreSQL
 ```
 
-### Responsabilidades
-
-| Camada     | Responsabilidade                     |
-| ---------- | ------------------------------------ |
-| APIView    | Receber e responder requisições HTTP |
-| Service    | Aplicar regras de negócio            |
-| Repository | Consultar e manipular dados          |
-| Model      | Representar entidades do banco       |
-| PostgreSQL | Persistência dos dados               |
+| Camada | Responsabilidade |
+|---------|------------------|
+| ViewSet | Receber requisições HTTP e retornar respostas JSON |
+| Service | Aplicar regras de negócio |
+| Repository | Consultar e manipular dados |
+| Model | Representar as entidades do banco |
+| PostgreSQL | Persistência dos dados |
 
 ---
 
-# Estrutura da API
+# Autenticação
+
+A API utiliza autenticação do **Django REST Framework**.
+
+Antes de consumir qualquer endpoint protegido é necessário realizar o **login** para obter um **token de acesso**.
+
+Fluxo:
 
 ```text
-api/
-├── serializers/
-│   ├── professor.py
-│   ├── sala.py
-│   ├── horario.py
-│   └── alocacao.py
-│
-├── views/
-│   ├── professor.py
-│   ├── sala.py
-│   ├── horario.py
-│   └── alocacao.py
-│
-├── urls.py
-└── permissions.py
+Login
+   ↓
+Recebe Token
+   ↓
+Authorization: Bearer <token>
+   ↓
+Consome a API
+```
+
+ou
+
+Use o Superusuário para acessar a **API** para obter o acesso com **superuser**.
+
+```bash
+python manage.py createsuperuser   # crie super ususario e use suas credenciais para consumo da api
+```
+
+Fluxo:
+
+```text
+Login via admin
+   ↓
+coloca credenciais Nome e Senha
+   ↓
+   ↓
+Consome a API
+```
+
+Caso o token não seja enviado ou esteja inválido, a API retornará:
+
+```http
+401 Unauthorized
 ```
 
 ---
 
-## Função de Cada Pasta
+# Estrutura
 
-### serializers/
-
-Responsável por converter objetos Python/Django em JSON e JSON em objetos Python.
-
-Exemplo:
-
-- Recebe um objeto `Professor`.
-- Converte para JSON na resposta da API.
-- Valida dados recebidos em requisições POST e PUT.
-
----
-
-### views/
-
-Responsável por receber as requisições HTTP da API.
-
-Funções:
-
-- Processar requisições GET, POST, PUT e DELETE.
-- Chamar os Services para executar regras de negócio.
-- Retornar respostas em JSON.
+```
+api/
+├── serializers/
+├── views/
+├── services/
+├── repositories/
+├── permissions.py
+└── urls.py
+```
 
 ---
 
-### urls.py
+# Rotas
 
-Centraliza o mapeamento dos endpoints da API.
-
-Exemplo:
+As rotas são registradas através do **DefaultRouter** do Django REST Framework.
 
 ```python
-path("professores/", ProfessorListAPIView.as_view())
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+
+router.register(r'professores', ProfessorViewSet)
+router.register(r'horarios', HorarioViewSet)
+router.register(r'alocacoes', AlocacaoViewSet)
+router.register(r'salas', SalaViewSet)
+router.register(r'curso', CursoViewset)
+router.register(r'disciplina', DisciplinaViewset)
+router.register(r'disponibilidade-professor', DisponibilidadeProfessorViewset)
+router.register(r'periodo-letivo', PeriodoLetivoViewset)
+router.register(r'recurso-sala', RecursoSalaViewset)
+router.register(r'turma', TurmaViewset)
+
+urlpatterns = router.urls
 ```
 
 ---
 
 # Endpoints
 
+Todos os recursos seguem o padrão REST do DRF.
+
 ## Professores
 
-### Listar Professores
-
-```http
-GET /api/professores/
-```
-
-### Buscar Professor
-
-```http
-GET /api/professores/{id}/
-```
-
-### Cadastrar Professor
-
-```http
-POST /api/professores/
-```
-
-### Atualizar Professor
-
-```http
-PUT /api/professores/{id}/
-```
-
-### Remover Professor
-
-```http
-DELETE /api/professores/{id}/
-```
-
-### Exemplo de Resposta
-
-```json
-{
-  "id": 1,
-  "nome": "João Silva",
-  "email": "joao@universidade.br"
-}
-```
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/professores/` |
+| POST | `/api/professores/` |
+| GET | `/api/professores/{id}/` |
+| PUT | `/api/professores/{id}/` |
+| PATCH | `/api/professores/{id}/` |
+| DELETE | `/api/professores/{id}/` |
 
 ---
 
 ## Salas
 
-### Listar Salas
-
-```http
-GET /api/salas/
-```
-
-### Buscar Sala
-
-```http
-GET /api/salas/{id}/
-```
-
-### Cadastrar Sala
-
-```http
-POST /api/salas/
-```
-
-### Atualizar Sala
-
-```http
-PUT /api/salas/{id}/
-```
-
-### Remover Sala
-
-```http
-DELETE /api/salas/{id}/
-```
-
-### Exemplo de Resposta
-
-```json
-{
-  "id": 1,
-  "nome": "Laboratório 01",
-  "capacidade": 40
-}
-```
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/salas/` |
+| POST | `/api/salas/` |
+| GET | `/api/salas/{id}/` |
+| PUT | `/api/salas/{id}/` |
+| PATCH | `/api/salas/{id}/` |
+| DELETE | `/api/salas/{id}/` |
 
 ---
 
 ## Horários
 
-### Listar Horários
-
-```http
-GET /api/horarios/
-```
-
-### Buscar Horário
-
-```http
-GET /api/horarios/{id}/
-```
-
-### Cadastrar Horário
-
-```http
-POST /api/horarios/
-```
-
-### Atualizar Horário
-
-```http
-PUT /api/horarios/{id}/
-```
-
-### Remover Horário
-
-```http
-DELETE /api/horarios/{id}/
-```
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/horarios/` |
+| POST | `/api/horarios/` |
+| GET | `/api/horarios/{id}/` |
+| PUT | `/api/horarios/{id}/` |
+| PATCH | `/api/horarios/{id}/` |
+| DELETE | `/api/horarios/{id}/` |
 
 ---
 
 ## Alocações
 
-### Listar Alocações
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/alocacoes/` |
+| POST | `/api/alocacoes/` |
+| GET | `/api/alocacoes/{id}/` |
+| PUT | `/api/alocacoes/{id}/` |
+| PATCH | `/api/alocacoes/{id}/` |
+| DELETE | `/api/alocacoes/{id}/` |
+
+---
+
+## Cursos
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/curso/` |
+| POST | `/api/curso/` |
+| GET | `/api/curso/{id}/` |
+| PUT | `/api/curso/{id}/` |
+| PATCH | `/api/curso/{id}/` |
+| DELETE | `/api/curso/{id}/` |
+
+---
+
+## Disciplinas
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/disciplina/` |
+| POST | `/api/disciplina/` |
+| GET | `/api/disciplina/{id}/` |
+| PUT | `/api/disciplina/{id}/` |
+| PATCH | `/api/disciplina/{id}/` |
+| DELETE | `/api/disciplina/{id}/` |
+
+---
+
+## Turmas
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/turma/` |
+| POST | `/api/turma/` |
+| GET | `/api/turma/{id}/` |
+| PUT | `/api/turma/{id}/` |
+| PATCH | `/api/turma/{id}/` |
+| DELETE | `/api/turma/{id}/` |
+
+---
+
+## Períodos Letivos
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/periodo-letivo/` |
+| POST | `/api/periodo-letivo/` |
+| GET | `/api/periodo-letivo/{id}/` |
+| PUT | `/api/periodo-letivo/{id}/` |
+| PATCH | `/api/periodo-letivo/{id}/` |
+| DELETE | `/api/periodo-letivo/{id}/` |
+
+---
+
+## Disponibilidade dos Professores
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/disponibilidade-professor/` |
+| POST | `/api/disponibilidade-professor/` |
+| GET | `/api/disponibilidade-professor/{id}/` |
+| PUT | `/api/disponibilidade-professor/{id}/` |
+| PATCH | `/api/disponibilidade-professor/{id}/` |
+| DELETE | `/api/disponibilidade-professor/{id}/` |
+
+---
+
+## Recursos das Salas
+
+| Método | Endpoint |
+|---------|----------|
+| GET | `/api/recurso-sala/` |
+| POST | `/api/recurso-sala/` |
+| GET | `/api/recurso-sala/{id}/` |
+| PUT | `/api/recurso-sala/{id}/` |
+| PATCH | `/api/recurso-sala/{id}/` |
+| DELETE | `/api/recurso-sala/{id}/` |
+
+---
+
+# Exemplo de Requisição
 
 ```http
-GET /api/alocacoes/
+POST /api/professores/
+Authorization: Bearer <token>
+Content-Type: application/json
 ```
-
-### Buscar Alocação
-
-```http
-GET /api/alocacoes/{id}/
-```
-
-### Criar Alocação
-
-```http
-POST /api/alocacoes/
-```
-
-### Remover Alocação
-
-```http
-DELETE /api/alocacoes/{id}/
-```
-
-### Exemplo de Requisição
 
 ```json
 {
-  "professor": 1,
-  "sala": 5,
-  "horario": 3,
-  "disciplina": 2
+    "nome": "João Silva",
+    "email": "joao@email.com"
 }
 ```
 
-### Exemplo de Resposta
+---
+
+# Exemplo de Resposta
 
 ```json
 {
-  "id": 10,
-  "professor": 1,
-  "sala": 5,
-  "horario": 3,
-  "disciplina": 2
+    "id": 1,
+    "nome": "João Silva",
+    "email": "joao@email.com"
 }
-```
-
----
-
-# Endpoints de Negócio
-
-## Verificar Conflitos de Alocação
-
-Permite identificar conflitos de horários, salas ou professores.
-
-### Endpoint
-
-```http
-GET /api/alocacoes/conflitos/
-```
-
-### Exemplo de Resposta
-
-```json
-{
-  "conflitos": [
-    {
-      "professor": "João Silva",
-      "problema": "Professor alocado em dois horários simultâneos"
-    }
-  ]
-}
-```
-
-### Regras Validadas
-
-* Professor não pode estar em dois horários simultaneamente.
-* Sala não pode possuir duas disciplinas no mesmo horário.
-* Disciplina não pode possuir alocações duplicadas.
-
----
-
-# Dashboard
-
-Fornece dados estatísticos para exibição nos painéis administrativos.
-
-### Endpoint
-
-```http
-GET /api/dashboard/
-```
-
-### Exemplo de Resposta
-
-```json
-{
-  "total_professores": 50,
-  "total_salas": 20,
-  "total_disciplinas": 80,
-  "total_alocacoes": 180,
-  "conflitos": 4
-}
-```
-
----
-
-# Fluxo de Desenvolvimento
-
-## Repository
-
-Responsável pelas consultas ao banco.
-
-Exemplo:
-
-```python
-def listar_salas_disponiveis():
-    return Sala.objects.filter(ativa=True)
-```
-
----
-
-## Services
-
-Responsáveis pelas regras de negócio.
-
-Exemplo:
-
-```python
-def criar_alocacao(dados):
-    validar_conflitos(dados)
-
-    return Alocacao.objects.create(**dados)
-```
-
----
-
-## API Views
-
-Responsáveis por receber requisições HTTP.
-
-Exemplo:
-
-```python
-class SalaListAPIView(APIView):
-
-    def get(self, request):
-        salas = listar_salas_disponiveis()
-
-        serializer = SalaSerializer(
-            salas,
-            many=True
-        )
-
-        return Response(serializer.data)
 ```
 
 ---
 
 # Documentação Automática
 
-A API deverá utilizar:
+A API utiliza o **drf-spectacular** para geração automática da documentação OpenAPI.
+
+Instalação:
 
 ```bash
-pip install djangorestframework
 pip install drf-spectacular
 ```
 
-Endpoints da documentação:
+Documentação disponível em:
 
-```http
-/api/schema/
+```
+/api/schema/   -> baixa em formato .yaml a documentação
 /api/schema/swagger-ui/
 ```
 
 ---
 
-# Entregas Previstas da Sprint
+# Tecnologias
 
-* CRUD de Professores.
-* CRUD de Salas.
-* CRUD de Horários.
-* CRUD de Alocações.
-* Endpoint de Conflitos.
-* Endpoint de Dashboard.
-* Integração com PostgreSQL 17.
-* Documentação automática da API.
-* Integração com frontend do sistema.
+- Python 3
+- Django
+- Django REST Framework (DRF)
+- PostgreSQL
+- drf-spectacular
 
 ---
 
-# Resultado Esperado
+# Observações
 
-Ao final da sprint, a API deverá permitir:
-
-* Consulta e gerenciamento dos dados acadêmicos.
-* Criação e manutenção das alocações.
-* Identificação automática de conflitos.
-* Alimentação dos dashboards administrativos.
-* Integração entre frontend e backend.
-* Base preparada para futuras aplicações móveis ou integrações externas.
+- Todos os endpoints retornam dados em formato JSON.
+- Os ViewSets são registrados automaticamente pelo `DefaultRouter`.
+- Para acessar endpoints protegidos é obrigatório realizar autenticação e enviar o token de acesso.
+- A documentação Swagger é gerada automaticamente pelo DRF através do drf-spectacular.
