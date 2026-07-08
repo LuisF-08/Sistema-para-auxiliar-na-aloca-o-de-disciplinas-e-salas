@@ -1,11 +1,15 @@
 # dependencias principais
 Django==5.2.14
 
+# api rest (usada em src/api/)
+djangorestframework>=3.15
+
 # driver postgresql 17 (psycopg3 com binarios pre-compilados — sem precisar de gcc)
 psycopg[binary]>=3.1.0
 
 # leitura de variaveis de ambiente a partir do arquivo .env
 python-decouple>=3.8
+python-dotenv>=1.0
 
 # geracao de relatorios PDF
 reportlab>=4.0

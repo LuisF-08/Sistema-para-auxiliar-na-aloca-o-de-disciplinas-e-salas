@@ -11,5 +11,6 @@ urlpatterns = [
     path('infraestrutura/', include('infraestrutura.urls', namespace='infraestrutura')),
     path('alocacao/', include('alocacao.urls', namespace='alocacao')),
     path('relatorios/', include('relatorios.urls', namespace='relatorios')),
+    path('api/', include('api.urls')),  # api rest (viewsets ja existiam mas n tavam conectadas)
 ]
 
