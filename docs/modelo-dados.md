@@ -4,9 +4,9 @@ este documento descreve a base de dados do sistema de alocacao de disciplinas e 
 
 ## banco usado agora
 
-o ambiente atual usa sqlite em desenvolvimento, no arquivo local `db.sqlite3`.
+o ambiente (dev e producao) usa postgresql 17, tanto local quanto em producao. esse texto aqui dizia sqlite antes, mas isso ficou desatualizado desde a migracao documentada em `docs/backend_e_banco_de_dados.md` (secao 4 e 17) — o sqlite n suporta os indices unicos parciais (`UniqueConstraint` com `condition=`) que o app `alocacao` usa pra travar conflito de horario, entao o projeto trocou pra postgresql.
 
-esse arquivo n deve ir para o git, pq ele e dado local de maquina. para producao, a recomendacao e usar postgresql, pq ele lida melhor com concorrencia, volume maior de dados, backup e operacao institucional.
+pra rodar localmente, o jeito mais rapido e um container docker (ver secao 19 de `docs/backend_e_banco_de_dados.md`). as credenciais ficam no `.env` (nunca vai pro git — usa o `.env.example` como base).
 
 ## entidades principais
 
