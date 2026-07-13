@@ -8,14 +8,23 @@
     <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif;">Turmas</h2>
     <p class="text-secondary small mt-1 mb-0">{{ turmas|length }} registros cadastrados</p>
   </div>
-  <!-- Botãoo que abre o modal -->
   <button type="button" class="btn text-white px-3 fw-semibold d-flex align-items-center gap-2" 
-          data-bs-toggle="modal" data-target="#turmaModal" data-bs-toggle="modal" data-bs-target="#turmaModal"
+          data-bs-toggle="modal" data-bs-target="#turmaModal"
           onclick="abrirModalCriar()"
           style="background-color: #11346A; border-radius: 8px; height: 40px; font-size: 14px;">
     <i class="bi bi-plus-lg"></i> Novo registro
   </button>
 </div>
+
+{% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} py-2" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 
 <!-- Barra de Busca -->
 <div class="my-4">
@@ -45,13 +54,13 @@
         {% for turma in turmas %}
         <tr style="border-bottom: 1px solid #F1F3F5; font-size: 14px;">
           <td class="ps-4 py-3 fw-bold text-dark">{{ turma.nome }}</td>
-          
+
           <!-- Curso -->
           <td class="py-3 text-secondary">{{ turma.curso|default:"Ciência da Computação" }}</td>
-          
+
           <!-- Período -->
           <td class="py-3 text-secondary">{{ turma.periodo_letivo|default:"1º" }}</td>
-          
+
           <!-- Quantidade de Alunos -->
           <td class="py-3">
             <span class="badge px-3 py-2 fw-bold" 
@@ -61,6 +70,8 @@
           </td>
           <td class="text-end pe-4 py-3">
             <button class="btn btn-link text-secondary p-1 me-2 shadow-none" title="Editar"
+              data-bs-toggle="modal" 
+              data-bs-target="#turmaModal"
               data-id="{{ turma.id }}"
               data-nome="{{ turma.nome }}"
               data-curso="{{ turma.curso.id }}"
@@ -68,17 +79,18 @@
               data-alunos="{{ turma.numero_alunos }}"
               data-turno="{{ turma.turno }}"
               data-url="{% url 'pessoas:turma_update' turma.id %}"
-              data-bs-toggle="modal" data-bs-target="#turmaModal"
               onclick="abrirModalEditar(this)">
               <i class="bi bi-pencil" style="font-size: 16px;"></i>
             </button>
-            <form action="{% url 'pessoas:turma_delete' turma.id %}" method="post" class="d-inline"
-               onsubmit="return confirm('Tem certeza que deseja excluir esta turma?');">
-               {% csrf_token %}
-              <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir">
-                <i class="bi bi-trash" style="font-size: 16px;"></i>
-              </button>
-            </form>
+            <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir"
+              data-bs-toggle="modal"
+              data-bs-target="#modalExcluir"
+              data-id="{{ turma.id }}"
+              data-nome="{{ turma.nome }}"
+              data-url="{% url 'pessoas:turma_delete' turma.id %}"
+              onclick="abrirModalExcluir(this)">
+              <i class="bi bi-trash" style="font-size: 16px;"></i>
+            </button>
           </td>
         </tr>
         {% empty %}
@@ -94,14 +106,14 @@
   </div>
 </div>
 
-<!--Modal de cadastro-->
+<!--Modal de cadastro/edição-->
 <div class="modal fade" id="turmaModal" tabindex="-1" aria-labelledby="turmaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 532px;">
     <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
-      
+
       <!-- Cabeçalho  -->
       <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
-        <h5 class="modal-title fw-bold text-dark fs-5" id="turmaModalLabel" style="font-family: system-ui, sans-serif; letter-spacing: -0.5px;">Novo Turma</h5>
+        <h5 class="modal-title fw-bold text-dark fs-5" id="turmaModalLabel" style="font-family: system-ui, sans-serif; letter-spacing: -0.5px;">Nova Turma</h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
@@ -109,7 +121,7 @@
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
-            
+
             <!-- Código -->
             <div class="col-md-6">
               <label for="id_nome" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Código <span class="text-danger">*</span></label>
@@ -167,7 +179,7 @@
           </div>
         </div>
 
-        <!-- Rodapé do Modal ( -->
+        <!-- Rodapé do Modal -->
         <div class="modal-footer border-top-0 pt-4 pb-2 px-3 d-flex gap-3">
           <button type="button" class="btn btn-light bg-white border flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal" 
                   style="border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px;">
@@ -184,39 +196,67 @@
   </div>
 </div>
 
-
-<!-- MODAL: CRIAR / EDITAR via js --> 
+<!-- Modal: Confirmar exclusão -->
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-labelledby="modalExcluirLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+    <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
+      <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
+        <h5 class="modal-title fw-bold text-dark fs-5" id="modalExcluirLabel" style="font-family: system-ui, sans-serif;">Excluir Turma</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="px-3 py-2" style="font-size: 14px;">
+        <p class="mb-2">Você está prestes a excluir a turma <strong id="nomeExcluir"></strong>.</p>
+        <div class="alert alert-warning py-2 mb-0" style="font-size: 13px;">Esta ação não pode ser desfeita.</div>
+      </div>
+      <form method="post" id="formExcluir" action="">
+        {% csrf_token %}
+        <div class="modal-footer border-top-0 pt-4 pb-2 px-3 d-flex gap-3">
+          <button type="button" class="btn btn-light bg-white border flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal" 
+                  style="border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" 
+                  style="background-color: #C0392B; border-radius: 8px; height: 44px; font-size: 14px;">
+            Confirmar exclusão
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const turmaModal = document.getElementById('turmaModal');
-  const form = document.getElementById('formTurma');
-  const modalTitle = document.getElementById('turmaModalLabel');
-  const submitBtn = form.querySelector('button[type="submit"]');
-  const urlCreate = "{% url 'pessoas:turma_create' %}"; // 
+  function abrirModalCriar() {
+    const form = document.getElementById('formTurma');
+    const modalTitle = document.getElementById('turmaModalLabel');
+    const submitBtn = form.querySelector('button[type="submit"]');
 
-  turmaModal.addEventListener('show.bs.modal', function (event) {
-    const button = event.relatedTarget;
+    modalTitle.textContent = 'Nova Turma';
+    submitBtn.textContent = 'Criar registro';
+    form.action = "{% url 'pessoas:turma_create' %}";
+    form.reset();
+  }
 
-    if (button && button.hasAttribute('data-id')) {
-      // Abriu pelo lápis -> modo edição
-      modalTitle.textContent = 'Editar Turma';
-      submitBtn.textContent = 'Salvar alterações';
-      form.action = button.getAttribute('data-url');
+  function abrirModalEditar(botao) {
+    const form = document.getElementById('formTurma');
+    const modalTitle = document.getElementById('turmaModalLabel');
+    const submitBtn = form.querySelector('button[type="submit"]');
 
-      document.getElementById('id_nome').value = button.getAttribute('data-nome') || '';
-      document.getElementById('id_curso').value = button.getAttribute('data-curso') || '';
-      document.getElementById('id_periodo_letivo').value = button.getAttribute('data-periodo') || '';
-      document.getElementById('id_numero_alunos').value = button.getAttribute('data-alunos') || '';
-      document.getElementById('id_turno').value = button.getAttribute('data-turno') || '';
-    } else {
-      // Abriu pelo "Novo registro" -> modo criação
-      modalTitle.textContent = 'Novo Turma';
-      submitBtn.textContent = 'Criar registro';
-      form.action = urlCreate;
-      form.reset();
-    }
-  });
-});
+    modalTitle.textContent = 'Editar Turma';
+    submitBtn.textContent = 'Salvar alterações';
+    form.action = botao.getAttribute('data-url');
+
+    document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
+    document.getElementById('id_curso').value = botao.getAttribute('data-curso') || '';
+    document.getElementById('id_periodo_letivo').value = botao.getAttribute('data-periodo') || '';
+    document.getElementById('id_numero_alunos').value = botao.getAttribute('data-alunos') || '';
+    document.getElementById('id_turno').value = botao.getAttribute('data-turno') || '';
+  }
+
+  function abrirModalExcluir(botao) {
+    const form = document.getElementById('formExcluir');
+    form.action = botao.getAttribute('data-url');
+    document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
+  }
 </script>
 {% endblock %}
