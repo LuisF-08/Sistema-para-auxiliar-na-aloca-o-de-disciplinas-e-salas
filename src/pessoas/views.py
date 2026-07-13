@@ -56,24 +56,30 @@ def turma_list(request):
     })
 
 
+def turma_update(request, pk):
+    turma = Turma.objects.get(pk=pk)
+    if request.method == 'POST':
+        turma.nome = request.POST.get('nome')
+        curso_id = request.POST.get('curso')
+        periodo_letivo = request.POST.get('periodo_letivo')
+        turma.numero_alunos = request.POST.get('numero_alunos')
+        turma.turno = request.POST.get('turno')
+
+        curso_instancia = Curso.objects.get(id=curso_id) if curso_id else None
+        periodo_instancia = None
+
+        if periodo_letivo:
+            if str(periodo_letivo).isdigit():
+                periodo_instancia = PeriodoLetivo.objects.filter(id=periodo_letivo).first()
+            else:
+                apenas_numeros = ''.join(c for c in str(periodo_letivo) if c.isdigit())
+                if apenas_numeros:
+                    semestre_num = int(apenas_numeros)
+                    periodo_instancia = PeriodoLetivo.objects.filter(semestre=semestre_num).first()
+
+        turma.curso = curso_instancia
+        turma.periodo_letivo = periodo_instancia
+        turma.save()
+
 def professor_list(request):
     return render(request, 'pessoas/professor_list.html', {})
-
-class ProfessorCreateView(CreateView):
-    model = Professor
-    fields = '__all__'
-    success_url = reverse_lazy('professor_create')
-
-class ProfessorUpdateView(UpdateView):
-    model = Professor
-    fields = '__all__'
-    context_object_name = 'professor'
-    success_url = reverse_lazy('professor_create')
-
-class ProfessorDeleteView(DeleteView):
-    model = Professor
-    context_object_name = 'professor'
-    success_url = reverse_lazy('professor_create')
-
-
-
