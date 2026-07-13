@@ -9,6 +9,7 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
+    
 
 
 class Curso(TimeStampedModel):
@@ -16,7 +17,7 @@ class Curso(TimeStampedModel):
     codigo = models.CharField(max_length=20, unique=True)
     ativo = models.BooleanField(default=True)
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         ordering = ["nome"]
         verbose_name = "curso"
         verbose_name_plural = "cursos"
@@ -35,7 +36,7 @@ class PeriodoLetivo(TimeStampedModel):
     data_fim = models.DateField()
     ativo = models.BooleanField(default=True)
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         ordering = ["-ano", "-semestre"]
         verbose_name = "periodo letivo"
         verbose_name_plural = "periodos letivos"
@@ -83,7 +84,7 @@ class Disciplina(TimeStampedModel):
     )
     ativo = models.BooleanField(default=True)
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         ordering = ["curso__nome", "nome"]
         verbose_name = "disciplina"
         verbose_name_plural = "disciplinas"
