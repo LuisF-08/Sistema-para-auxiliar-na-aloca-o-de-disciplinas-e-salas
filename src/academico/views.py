@@ -32,7 +32,7 @@ def disciplina_update(request, pk):
     if request.method == 'POST':
         disciplina.nome = request.POST.get('nome')
         disciplina.codigo = request.POST.get('codigo')
-        disciplina.carga_horaria_semanal = request.POST.get('carga_horaria_semanal') or 1
+        disciplina.carga_horaria_semanal = request.POST.get('carga_horaria_semanal')
         disciplina.periodo_recomendado = request.POST.get('periodo_recomendado') or None
         curso_id = request.POST.get('curso')
         disciplina.curso = Curso.objects.filter(id=curso_id).first() if curso_id else None

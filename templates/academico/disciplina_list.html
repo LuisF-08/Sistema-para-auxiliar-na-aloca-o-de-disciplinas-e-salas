@@ -59,7 +59,7 @@
           <td class="py-3">
             <span class="badge px-3 py-2 fw-bold" 
                   style="background-color: #E6F0FF; color: #0052CC; border-radius: 20px; font-size: 12px; letter-spacing: -0.2px;">
-              {{ disciplina.carga_horaria|default:"0" }}h
+              {{ disciplina.carga_horaria_semanal|default:"0" }}h
             </span>
           </td>
           <td class="text-end pe-4 py-3">
@@ -70,7 +70,7 @@
               data-codigo="{{ disciplina.codigo }}"
               data-nome="{{ disciplina.nome }}"
               data-curso="{{ disciplina.curso.id }}"
-              data-carga="{{ disciplina.carga_horaria }}"
+              data-carga="{{ disciplina.carga_horaria_semanal }}"
               data-periodo="{{ disciplina.periodo.id }}"
               data-url="{% url 'academico:disciplina_update' disciplina.id %}"
               onclick="abrirModalEditar(this)">
@@ -145,8 +145,8 @@
             </div>
 
             <div class="col-md-6">
-              <label for="id_carga_horaria" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Carga Horária (h) <span class="text-danger">*</span></label>
-              <input type="number" name="carga_horaria" id="id_carga_horaria" class="form-control border-0 py-2 px-3" 
+              <label for="id_carga_horaria_semanal" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Carga Horária (h) <span class="text-danger">*</span></label>
+              <input type="number" name="carga_horaria_semanal" id="id_carga_horaria_semanal" class="form-control border-0 py-2 px-3" 
                      placeholder="Ex: 60"
                      style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
             </div>
