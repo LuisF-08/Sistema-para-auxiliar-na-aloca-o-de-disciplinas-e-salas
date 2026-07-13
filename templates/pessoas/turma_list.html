@@ -11,6 +11,7 @@
   <!-- Botãoo que abre o modal -->
   <button type="button" class="btn text-white px-3 fw-semibold d-flex align-items-center gap-2" 
           data-bs-toggle="modal" data-target="#turmaModal" data-bs-toggle="modal" data-bs-target="#turmaModal"
+          onclick="abrirModalCriar()"
           style="background-color: #11346A; border-radius: 8px; height: 40px; font-size: 14px;">
     <i class="bi bi-plus-lg"></i> Novo registro
   </button>
@@ -58,15 +59,26 @@
               {{ turma.numero_alunos|default:"0" }} alunos
             </span>
           </td>
-          
-          <!-- Aliamento de ações, a direita -->
           <td class="text-end pe-4 py-3">
-            <button class="btn btn-link text-secondary p-1 me-2 shadow-none" title="Editar">
+            <button class="btn btn-link text-secondary p-1 me-2 shadow-none" title="Editar"
+              data-id="{{ turma.id }}"
+              data-nome="{{ turma.nome }}"
+              data-curso="{{ turma.curso.id }}"
+              data-periodo="{{ turma.periodo_letivo.id }}"
+              data-alunos="{{ turma.numero_alunos }}"
+              data-turno="{{ turma.turno }}"
+              data-url="{% url 'pessoas:turma_update' turma.id %}"
+              data-bs-toggle="modal" data-bs-target="#turmaModal"
+              onclick="abrirModalEditar(this)">
               <i class="bi bi-pencil" style="font-size: 16px;"></i>
             </button>
-            <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir">
-              <i class="bi bi-trash" style="font-size: 16px;"></i>
-            </button>
+            <form action="{% url 'pessoas:turma_delete' turma.id %}" method="post" class="d-inline"
+               onsubmit="return confirm('Tem certeza que deseja excluir esta turma?');">
+               {% csrf_token %}
+              <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir">
+                <i class="bi bi-trash" style="font-size: 16px;"></i>
+              </button>
+            </form>
           </td>
         </tr>
         {% empty %}
@@ -93,7 +105,7 @@
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form method="post" action="">
+      <form id="formTurma" method="post" action="">
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
@@ -155,7 +167,7 @@
           </div>
         </div>
 
-        <!-- Rodapé do Modal (botoes) -->
+        <!-- Rodapé do Modal ( -->
         <div class="modal-footer border-top-0 pt-4 pb-2 px-3 d-flex gap-3">
           <button type="button" class="btn btn-light bg-white border flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal" 
                   style="border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px;">
@@ -171,4 +183,40 @@
     </div>
   </div>
 </div>
+
+
+<!-- MODAL: CRIAR / EDITAR via js --> 
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const turmaModal = document.getElementById('turmaModal');
+  const form = document.getElementById('formTurma');
+  const modalTitle = document.getElementById('turmaModalLabel');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const urlCreate = "{% url 'pessoas:turma_create' %}"; // 
+
+  turmaModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+
+    if (button && button.hasAttribute('data-id')) {
+      // Abriu pelo lápis -> modo edição
+      modalTitle.textContent = 'Editar Turma';
+      submitBtn.textContent = 'Salvar alterações';
+      form.action = button.getAttribute('data-url');
+
+      document.getElementById('id_nome').value = button.getAttribute('data-nome') || '';
+      document.getElementById('id_curso').value = button.getAttribute('data-curso') || '';
+      document.getElementById('id_periodo_letivo').value = button.getAttribute('data-periodo') || '';
+      document.getElementById('id_numero_alunos').value = button.getAttribute('data-alunos') || '';
+      document.getElementById('id_turno').value = button.getAttribute('data-turno') || '';
+    } else {
+      // Abriu pelo "Novo registro" -> modo criação
+      modalTitle.textContent = 'Novo Turma';
+      submitBtn.textContent = 'Criar registro';
+      form.action = urlCreate;
+      form.reset();
+    }
+  });
+});
+</script>
 {% endblock %}
