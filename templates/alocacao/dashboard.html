@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}SADAS - Dashboard{% endblock %}
+
+{% block content %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif; color: #0F102E !important;">Dashboard</h2>
+    <p class="text-secondary small mt-1 mb-0" style="color: #5A6882 !important;">Visão geral das alocações</p>
+  </div>
+  <a href="/alocacao/nova/" class="btn text-white px-3 fw-semibold d-flex align-items-center gap-2" 
+     style="background-color: #1A365D; border-radius: 8px; height: 40px; font-size: 14px;">
+    <i class="bi bi-calendar-plus"></i> Nova Alocação
+  </a>
+</div>
+
+<div hx-get="{% url 'alocacao:dashboard_data_api' %}" 
+  hx-trigger="load" 
+  hx-swap="none" 
+  hx-on::after-request="inicializarGraficos(event.detail.xhr.responseText)">
+    
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
+      <h6 class="text-secondary small fw-bold text-uppercase mb-1">Total de Alocações</h6>
+      <h2 class="fw-bold my-1 text-dark" id="kpi-total"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
+      <span class="text-success small fw-semibold">+12 esta semana</span>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px; background-color: #FFF5F5;">
+      <h6 class="text-secondary small fw-bold text-uppercase mb-1">Conflitos Pendentes</h6>
+      <h2 class="fw-bold my-1 text-danger" id="kpi-conflitos"><span class="spinner-border spinner-border-sm text-danger"></span></h2>
+      <span class="text-muted small">2 críticos, 1 aviso</span>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
+      <h6 class="text-secondary small fw-bold text-uppercase mb-1">Ocupação das Salas</h6>
+      <h2 class="fw-bold my-1 text-dark" id="kpi-ocupacao"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
+      <span class="text-muted small">38 de 49 salas</span>
+    </div>
+  </div>
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
+      <h6 class="text-secondary small fw-bold text-uppercase mb-1">Prof. sem Alocação</h6>
+      <h2 class="fw-bold my-1 text-dark" id="kpi-professores"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
+      <span class="text-muted small">de 68 professores</span>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-8">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: 12px; min-height: 380px;">
+      <h6 class="fw-bold text-dark m-0">Ocupação por Dia da Semana</h6>
+      <small class="text-muted mb-3 d-block">Percentual de salas ocupadas</small>
+      <div class="flex-grow-1" style="height: 280px; position: relative;">
+        <canvas id="chartOcupacao"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: 12px; min-height: 380px;">
+      <h6 class="fw-bold text-dark m-0">Status das Salas</h6>
+      <small class="text-muted mb-3 d-block">49 salas totais</small>
+      <div style="height: 200px; position: relative;">
+        <canvas id="chartStatusSalas"></canvas>
+      </div>
+      <div class="mt-3" style="font-size: 13px;">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="text-muted"><i class="bi bi-circle-fill me-2" style="color: #2563EB;"></i>Alocadas</span>
+          <span class="fw-bold text-dark" id="legend-alocadas">-</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="text-muted"><i class="bi bi-circle-fill me-2" style="color: #E2E8F0;"></i>Livres</span>
+          <span class="fw-bold text-dark" id="legend-livres">-</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted"><i class="bi bi-circle-fill me-2" style="color: #D97706;"></i>Manutenção</span>
+          <span class="fw-bold text-dark" id="legend-manutencao">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  function inicializarGraficos(rawResponse) {
+      // 1. Converte a resposta texto do HTMX com segurança para JSON do JS
+      const dados = JSON.parse(rawResponse);
+
+      // 2. Popula os cards com os números reais
+      document.getElementById('kpi-total').innerText = dados.total_alocacoes;
+      document.getElementById('kpi-conflitos').innerText = dados.conflitos_pendentes;
+      document.getElementById('kpi-ocupacao').innerText = dados.taxa_ocupacao + '%';
+      document.getElementById('kpi-professores').innerText = dados.professores_sem_alocacao;
+      
+      document.getElementById('legend-alocadas').innerText = dados.salas_alocadas;
+      document.getElementById('legend-livres').innerText = dados.salas_livres;
+      document.getElementById('legend-manutencao').innerText = dados.salas_manutencao;
+
+      // 3. Renderiza o Gráfico de Barras
+      const ctxOcupacao = document.getElementById('chartOcupacao').getContext('2d');
+      new Chart(ctxOcupacao, {
+          type: 'bar',
+          data: {
+              labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'],
+              datasets: [{
+                  data: dados.dados_ocupacao_dias,
+                  backgroundColor: '#2563EB',
+                  borderRadius: 4,
+                  barThickness: 24,
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                  y: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
+                  x: { grid: { display: false } }
+              }
+          }
+      });
+
+      // 4. Renderiza o Gráfico de Rosca
+      const ctxStatus = document.getElementById('chartStatusSalas').getContext('2d');
+      new Chart(ctxStatus, {
+          type: 'doughnut',
+          data: {
+              datasets: [{
+                  data: [dados.salas_alocadas, dados.salas_livres, dados.salas_manutencao],
+                  backgroundColor: ['#2563EB', '#E2E8F0', '#D97706'],
+                  borderWidth: 0,
+                  cutout: '75%'
+              }]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } }
+          }
+      });
+  }
+</script>
+{% endblock %}

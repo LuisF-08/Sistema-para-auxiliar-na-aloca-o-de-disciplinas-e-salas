@@ -56,3 +56,6 @@ def disciplina_delete(request, pk):
         return redirect('/academico/disciplinas/')
     
     return render(request, 'academico/disciplina_confirm_delete.html', {'disciplina': disciplina})
+
+
+

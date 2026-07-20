@@ -19,7 +19,7 @@
 </head>
 <body>
 
-  <!-- 1. BARRA LATERAL (Utilizando as classes originais do projeto) -->
+  <!-- 1. BARRA LATERAL  -->
   <aside class="sidebar">
     
     <!-- Cabeçalho / Brand -->
@@ -39,7 +39,7 @@
       <!-- SEÇÃO: GERAL -->
       <div class="sidebar-section-label">Geral</div>
       <nav class="nav flex-column">
-        <a href="{% url 'relatorios:dashboard' %}" class="nav-link active">
+        <a href="{% url 'alocacao:dashboard' %}" class="nav-link active">
           <i class="bi bi-grid-1x2"></i> Dashboard
         </a>
         <a href="{% url 'relatorios:grade' %}" class="nav-link">
@@ -84,13 +84,13 @@
     <div class="sidebar-footer">
       <div class="sidebar-avatar">F</div>
       <div class="sidebar-user">
-        <strong>Felipe</strong>
-        <span>Dev Full-Stack</span>
+        <strong>Cordenador</strong>
+        <span></span>
       </div>
     </div>
   </aside>
 
-  <!-- 2. CONTEÚDO PRINCIPAL (Deslocado corretamente usando a classe do grupo) -->
+  <!-- 2. CONTEÚDO PRINCIPAL  -->
   <div class="main-with-sidebar">
     
     <!-- Topbar Oficial do Layout -->
@@ -104,7 +104,7 @@
       </div>
     </header>
 
-    <!-- Miolo da Página (Onde entram os cards e tabelas das views) -->
+    <!-- Miolo da Página -->
     <main class="p-4">
       {% block content %}
       {% endblock %}
