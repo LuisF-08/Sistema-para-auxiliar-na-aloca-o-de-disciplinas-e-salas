@@ -7,6 +7,7 @@ def disciplina_list(request):
     disciplinas = Disciplina.objects.all()
     return render(request, 'academico/disciplina_list.html', {'disciplinas': disciplinas})
 
+
 def disciplina_create(request):
   if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -56,6 +57,4 @@ def disciplina_delete(request, pk):
         return redirect('/academico/disciplinas/')
     
     return render(request, 'academico/disciplina_confirm_delete.html', {'disciplina': disciplina})
-
-
 

@@ -3,7 +3,7 @@
     {
       "id": "178214368347744rr",
       "tabKind": "request",
-      "name": "New Request",
+      "name": "http://",
       "method": "GET",
       "url": "",
       "params": [],

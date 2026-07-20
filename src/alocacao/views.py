@@ -1,14 +1,39 @@
-from django.shortcuts import render
+
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.db.models import Count
-from academico.models import Disciplina, Curso
+from academico.models import Disciplina, Curso, PeriodoLetivo
 from pessoas.models import Professor, Turma
 from alocacao.models import Alocacao
 from infraestrutura.models import Sala
 
-
 def alocacao_list(request):
-    return render(request, 'alocacao/alocacao_list.html', {})
+    periodos = PeriodoLetivo.objects.filter(ativo=True).order_by('-ano', '-semestre')
+    periodo_selecionado_id = request.GET.get('periodo')
+    
+    if periodo_selecionado_id:
+        periodo_atual = get_object_or_404(PeriodoLetivo, pk=periodo_selecionado_id)
+    else:
+        periodo_atual = periodos.first()
+
+    alocacoes = Alocacao.objects.filter(
+        periodo_letivo=periodo_atual
+    ).select_related(
+        'professor', 
+        'disciplina', 
+        'turma', 
+        'sala', 
+        'horario'
+    )
+
+    context = {
+        'periodos': periodos,
+        'periodo_atual': periodo_atual,
+        'alocacoes': alocacoes,
+    }
+    
+    return render(request, 'alocacao/alocacao_list.html', context)
+
 
 def dashboard_view(request):
     return render(request, 'alocacao/dashboard.html')
@@ -66,3 +91,6 @@ def dashboard_data_api(request):
         }
 
     return JsonResponse(data)
+
+
+
