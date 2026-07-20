@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 from django.db import IntegrityError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from .models import Turma
-=======
-from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, UpdateView, DeleteView
->>>>>>> main
 from .models import Professor
 from academico.models import Curso, PeriodoLetivo
     
@@ -102,7 +96,7 @@ def turma_delete(request, pk):
 def professor_list(request):
     professores = Professor.objects.all()
     return render(request, 'pessoas/professor_list.html', {'professores': professores})
-<<<<<<< HEAD
+
 
 def professor_create(request):
     if request.method == 'POST':
@@ -162,20 +156,3 @@ def professor_delete(request, pk):
         professor.delete()
         messages.success(request, 'Professor excluído com sucesso!')
     return redirect('pessoas:professor_list')
-=======
-class ProfessorCreateView(CreateView):
-    model = Professor
-    fields = '__all__'
-    success_url = reverse_lazy('pessoas:professor_create')
-
-class ProfessorUpdateView(UpdateView):
-    model = Professor
-    fields = '__all__'
-    context_object_name = 'professor'
-    success_url = reverse_lazy('pessoas:professor_create')
-
-class ProfessorDeleteView(DeleteView):
-    model = Professor
-    context_object_name = 'professor'
-    success_url = reverse_lazy('pessoas:professor_create')
->>>>>>> main
