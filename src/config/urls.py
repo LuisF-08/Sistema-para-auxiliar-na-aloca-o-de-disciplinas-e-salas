@@ -10,7 +10,7 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='dashboard.html'), name='dashboard'),
+    path('', TemplateView.as_view(template_name='alocacao/dashboard.html'), name='dashboard'),
     path('academico/', include('academico.urls', namespace='academico')),
     path('pessoas/', include('pessoas.urls', namespace='pessoas')),
     path('infraestrutura/', include('infraestrutura.urls', namespace='infraestrutura')),
