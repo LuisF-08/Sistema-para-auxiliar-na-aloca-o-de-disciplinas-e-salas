@@ -3,12 +3,26 @@
 {% block title %}Carga Horária — SisAloc{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-white">Carga Horária dos Professores</h1>
-  {% if periodo %}
-    <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
-  {% else %}
-    <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Carga Horária dos Professores</h1>
+    {% if periodo %}
+      <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
+    {% else %}
+      <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
+    {% endif %}
+  </div>
+  {% if dados %}
+    <div class="flex gap-3">
+      <a href="{% url 'relatorios:exportar_csv' %}?tipo=professores"
+         class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+        Exportar CSV
+      </a>
+      <a href="{% url 'relatorios:exportar_pdf' %}?tipo=professores"
+         class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+        Exportar PDF
+      </a>
+    </div>
   {% endif %}
 </div>
 
