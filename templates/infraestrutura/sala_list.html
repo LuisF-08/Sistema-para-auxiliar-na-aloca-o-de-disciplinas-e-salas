@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}SADAS - Professores{% endblock %}
+{% block title %}SADAS - Salas{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-start mb-1">
   <div>
-    <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif;">Professores</h2>
-    <p class="text-secondary small mt-1 mb-0">{{ professores|length }} registros cadastrados</p>
+    <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif;">Salas</h2>
+    <p class="text-secondary small mt-1 mb-0">{{ salas|length }} registros cadastrados</p>
   </div>
   <button type="button" class="btn text-white px-3 fw-semibold d-flex align-items-center gap-2" 
-          data-bs-toggle="modal" data-bs-target="#professorModal"
+          data-bs-toggle="modal" data-bs-target="#salaModal"
           onclick="abrirModalCriar()"
           style="background-color: #11346A; border-radius: 8px; height: 40px; font-size: 14px;">
     <i class="bi bi-plus-lg"></i> Novo registro
@@ -31,7 +31,7 @@
     <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
       <i class="bi bi-search"></i>
     </span>
-    <input type="text" class="form-control border-0 py-2 ps-5 pe-3" id="searchInput" placeholder="Buscar professores..."
+    <input type="text" class="form-control border-0 py-2 ps-5 pe-3" id="searchInput" placeholder="Buscar salas..."
            style="background-color: #F0F2F5; border-radius: 8px; height: 44px; font-size: 14px;" oninput="filtrarTabela()">
   </div>
 </div>
@@ -41,53 +41,44 @@
     <table class="table align-middle mb-0" style="font-family: system-ui, sans-serif;">
       <thead style="background-color: #ffffff;">
         <tr class="text-secondary" style="font-size: 12px; border-bottom: 1px solid #E9ECEF;">
-          <th class="ps-4 py-3 fw-semibold text-uppercase" style="width: 22%; letter-spacing: 0.5px;">Nome</th>
-          <th class="py-3 fw-semibold text-uppercase" style="width: 22%; letter-spacing: 0.5px;">E-mail</th>
-          <th class="py-3 fw-semibold text-uppercase" style="width: 18%; letter-spacing: 0.5px;">Especialidade</th>
-          <th class="py-3 fw-semibold text-uppercase" style="width: 13%; letter-spacing: 0.5px;">Carga Máx.</th>
-          <th class="py-3 fw-semibold text-uppercase" style="width: 10%; letter-spacing: 0.5px;">Status</th>
+          <th class="ps-4 py-3 fw-semibold text-uppercase" style="width: 25%; letter-spacing: 0.5px;">Identificação</th>
+          <th class="py-3 fw-semibold text-uppercase" style="width: 25%; letter-spacing: 0.5px;">Bloco</th>
+          <th class="py-3 fw-semibold text-uppercase" style="width: 20%; letter-spacing: 0.5px;">Tipo</th>
+          <th class="py-3 fw-semibold text-uppercase" style="width: 15%; letter-spacing: 0.5px;">Capacidade</th>
           <th class="text-end pe-4 py-3 fw-semibold text-uppercase" style="width: 15%; letter-spacing: 0.5px;">Ações</th>
         </tr>
       </thead>
       <tbody id="tabelaBody">
-        {% for professor in professores %}
+        {% for sala in salas %}
         <tr style="border-bottom: 1px solid #F1F3F5; font-size: 14px;">
-          <td class="ps-4 py-3 fw-bold text-dark">{{ professor.nome }}</td>
-          <td class="py-3 text-secondary">{{ professor.email|default:"—" }}</td>
-          <td class="py-3 text-secondary">{{ professor.especialidade|default:"—" }}</td>
+          <td class="ps-4 py-3 fw-bold text-dark">{{ sala.nome }}</td>
+          <td class="py-3 text-secondary">{{ sala.localizacao|default:"—" }}</td>
+          <td class="py-3 text-secondary">{{ sala.get_tipo_sala_display }}</td>
           <td class="py-3">
             <span class="badge px-3 py-2 fw-bold" 
                   style="background-color: #E6F0FF; color: #0052CC; border-radius: 20px; font-size: 12px;">
-              {{ professor.carga_horaria_maxima|default:"0" }}h
+              {{ sala.capacidade_alunos|default:"0" }} lugares
             </span>
-          </td>
-          <td class="py-3">
-            {% if professor.ativo %}
-              <span class="badge px-3 py-2 fw-bold" style="background-color: #E3F9E5; color: #1B8A3D; border-radius: 20px; font-size: 12px;">Ativo</span>
-            {% else %}
-              <span class="badge px-3 py-2 fw-bold" style="background-color: #F0F2F5; color: #6C757D; border-radius: 20px; font-size: 12px;">Inativo</span>
-            {% endif %}
           </td>
           <td class="text-end pe-4 py-3">
             <button class="btn btn-link text-secondary p-1 me-2 shadow-none" title="Editar"
               data-bs-toggle="modal" 
-              data-bs-target="#professorModal"
-              data-id="{{ professor.pk }}"
-              data-nome="{{ professor.nome }}"
-              data-email="{{ professor.email|default:'' }}"
-              data-especialidade="{{ professor.especialidade|default:'' }}"
-              data-carga="{{ professor.carga_horaria_maxima }}"
-              data-ativo="{{ professor.ativo|yesno:'1,0' }}"
-              data-url="{% url 'pessoas:professor_update' professor.pk %}"
+              data-bs-target="#salaModal"
+              data-id="{{ sala.pk }}"
+              data-nome="{{ sala.nome }}"
+              data-localizacao="{{ sala.localizacao|default:'' }}"
+              data-tipo="{{ sala.tipo_sala }}"
+              data-capacidade="{{ sala.capacidade_alunos }}"
+              data-url="{% url 'infraestrutura:sala_update' sala.pk %}"
               onclick="abrirModalEditar(this)">
               <i class="bi bi-pencil" style="font-size: 16px;"></i>
             </button>
             <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir"
               data-bs-toggle="modal"
               data-bs-target="#modalExcluir"
-              data-id="{{ professor.pk }}"
-              data-nome="{{ professor.nome }}"
-              data-url="{% url 'pessoas:professor_delete' professor.pk %}"
+              data-id="{{ sala.pk }}"
+              data-nome="{{ sala.nome }}"
+              data-url="{% url 'infraestrutura:sala_delete' sala.pk %}"
               onclick="abrirModalExcluir(this)">
               <i class="bi bi-trash" style="font-size: 16px;"></i>
             </button>
@@ -95,8 +86,8 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center text-muted py-5" style="font-size: 14px;">
-            Nenhum professor cadastrado no sistema.
+          <td colspan="5" class="text-center text-muted py-5" style="font-size: 14px;">
+            Nenhuma sala cadastrada no sistema.
           </td>
         </tr>
         {% endfor %}
@@ -106,49 +97,48 @@
 </div>
 
 <!-- Modal: Criar / Editar -->
-<div class="modal fade" id="professorModal" tabindex="-1" aria-labelledby="professorModalLabel" aria-hidden="true">
+<div class="modal fade" id="salaModal" tabindex="-1" aria-labelledby="salaModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width: 532px;">
     <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
 
       <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
-        <h5 class="modal-title fw-bold text-dark fs-5" id="professorModalLabel" style="font-family: system-ui, sans-serif;">Novo Professor</h5>
+        <h5 class="modal-title fw-bold text-dark fs-5" id="salaModalLabel" style="font-family: system-ui, sans-serif;">Nova Sala</h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form id="formProfessor" method="post" action="">
+      <form id="formSala" method="post" action="">
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
 
             <div class="col-12">
-              <label for="id_nome" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Nome <span class="text-danger">*</span></label>
-              <input type="text" name="nome" id="id_nome" class="form-control border-0 py-2 px-3" 
+              <label for="id_nome" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Identificação / Nome <span class="text-danger">*</span></label>
+              <input type="text" name="nome" id="id_nome" class="form-control border-0 py-2 px-3" placeholder="Ex: A-101, Lab-3"
                      style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
             </div>
 
             <div class="col-md-6">
-              <label for="id_email" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">E-mail</label>
-              <input type="email" name="email" id="id_email" class="form-control border-0 py-2 px-3" 
+              <label for="id_localizacao" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Localização (Bloco)</label>
+              <input type="text" name="localizacao" id="id_localizacao" class="form-control border-0 py-2 px-3" placeholder="Ex: Bloco A"
                      style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
             </div>
 
             <div class="col-md-6">
-              <label for="id_especialidade" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Especialidade</label>
-              <input type="text" name="especialidade" id="id_especialidade" class="form-control border-0 py-2 px-3" 
-                     style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
+              <label for="id_tipo_sala" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Tipo de Sala <span class="text-danger">*</span></label>
+              <select name="tipo_sala" id="id_tipo_sala" class="form-select border-0 py-2 px-3 text-secondary" 
+                      style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
+                <option value="" disabled selected>Selecione...</option>
+                <option value="comum">Sala de Aula Comum</option>
+                <option value="laboratorio">Laboratório</option>
+                <option value="auditorio">Auditório</option>
+                <option value="online">Online / Remota</option>
+              </select>
             </div>
 
             <div class="col-md-6">
-              <label for="id_carga" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Carga Horária Máxima <span class="text-danger">*</span></label>
-              <input type="number" name="cargaHorariaMaxima" id="id_carga" class="form-control border-0 py-2 px-3" min="1"
+              <label for="id_capacidade" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Capacidade (Alunos) <span class="text-danger">*</span></label>
+              <input type="number" name="capacidade_alunos" id="id_capacidade" class="form-control border-0 py-2 px-3" min="1" placeholder="Ex: 30"
                      style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
-            </div>
-
-            <div class="col-md-6 d-flex align-items-end">
-              <div class="form-check">
-                <input type="checkbox" name="ativo" id="id_ativo" class="form-check-input" checked>
-                <label class="form-check-label text-dark" for="id_ativo" style="font-size: 14px;">Professor ativo</label>
-              </div>
             </div>
 
           </div>
@@ -175,11 +165,11 @@
   <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
     <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
       <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
-        <h5 class="modal-title fw-bold text-dark fs-5" id="modalExcluirLabel" style="font-family: system-ui, sans-serif;">Excluir Professor</h5>
+        <h5 class="modal-title fw-bold text-dark fs-5" id="modalExcluirLabel" style="font-family: system-ui, sans-serif;">Excluir Sala</h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="px-3 py-2" style="font-size: 14px;">
-        <p class="mb-2">Você está prestes a excluir o professor <strong id="nomeExcluir"></strong>.</p>
+        <p class="mb-2">Você está prestes a excluir a sala <strong id="nomeExcluir"></strong>.</p>
         <div class="alert alert-warning py-2 mb-0" style="font-size: 13px;">Esta ação não pode ser desfeita.</div>
       </div>
       <form method="post" id="formExcluir" action="">
@@ -208,31 +198,29 @@
   }
 
   function abrirModalCriar() {
-    const form = document.getElementById('formProfessor');
-    const modalTitle = document.getElementById('professorModalLabel');
+    const form = document.getElementById('formSala');
+    const modalTitle = document.getElementById('salaModalLabel');
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    modalTitle.textContent = 'Novo Professor';
+    modalTitle.textContent = 'Nova Sala';
     submitBtn.textContent = 'Criar registro';
-    form.action = "{% url 'pessoas:professor_create' %}";
+    form.action = "{% url 'infraestrutura:sala_create' %}";
     form.reset();
-    document.getElementById('id_ativo').checked = true;
   }
 
   function abrirModalEditar(botao) {
-    const form = document.getElementById('formProfessor');
-    const modalTitle = document.getElementById('professorModalLabel');
+    const form = document.getElementById('formSala');
+    const modalTitle = document.getElementById('salaModalLabel');
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    modalTitle.textContent = 'Editar Professor';
+    modalTitle.textContent = 'Editar Sala';
     submitBtn.textContent = 'Salvar alterações';
     form.action = botao.getAttribute('data-url');
 
     document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
-    document.getElementById('id_email').value = botao.getAttribute('data-email') || '';
-    document.getElementById('id_especialidade').value = botao.getAttribute('data-especialidade') || '';
-    document.getElementById('id_carga').value = botao.getAttribute('data-carga') || '';
-    document.getElementById('id_ativo').checked = botao.getAttribute('data-ativo') === '1';
+    document.getElementById('id_localizacao').value = botao.getAttribute('data-localizacao') || '';
+    document.getElementById('id_tipo_sala').value = botao.getAttribute('data-tipo') || '';
+    document.getElementById('id_capacidade').value = botao.getAttribute('data-capacidade') || '';
   }
 
   function abrirModalExcluir(botao) {
