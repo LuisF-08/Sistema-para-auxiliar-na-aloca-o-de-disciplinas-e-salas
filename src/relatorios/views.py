@@ -279,42 +279,129 @@ class RelatorioGradeView(View):
         return render(request, "relatorios/grade.html", ctx)
 
 
-def exportar_csv(request):
-    nome_arquivo = f"grade_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
-    response["Content-Disposition"] = f'attachment; filename="{nome_arquivo}"'
-
-    writer = csv.writer(response, delimiter=";")
-    writer.writerow([
-        "Dia da Semana", "Horário Início", "Horário Fim",
-        "Disciplina", "Professor", "Turma",
-        "Sala", "Capacidade Sala", "N. Alunos", "Assentos Ociosos", "Status",
-    ])
-
-    alocacoes = (
+def _qs_grade_filtrada(request):
+    periodo = _periodo_ativo()
+    qs = (
         Alocacao.objects
         .filter(status__in=STATUS_ATIVOS)
         .select_related("horario", "disciplina", "professor", "turma", "sala")
         .order_by("horario__dia_semana", "horario__horario_inicio")
     )
+    if periodo:
+        qs = qs.filter(periodo_letivo=periodo)
+    turma_id = request.GET.get("turma")
+    professor_id = request.GET.get("professor")
+    if turma_id:
+        qs = qs.filter(turma_id=turma_id)
+    elif professor_id:
+        qs = qs.filter(professor_id=professor_id)
+    return qs
 
-    for a in alocacoes:
-        ociosos = max(a.sala.capacidade_alunos - a.turma.numero_alunos, 0)
+
+def _qs_professores():
+    periodo = _periodo_ativo()
+    professores = Professor.objects.filter(ativo=True).order_by("nome")
+    dados = []
+    for prof in professores:
+        qs = Alocacao.objects.filter(professor=prof, status__in=STATUS_ATIVOS)
+        if periodo:
+            qs = qs.filter(periodo_letivo=periodo)
+        carga = qs.aggregate(total=Sum("disciplina__carga_horaria_semanal"))["total"] or 0
+        num_alocacoes = qs.count()
+        percentual = round((carga / prof.carga_horaria_maxima) * 100, 1) if prof.carga_horaria_maxima else 0
+        dados.append({
+            "nome": prof.nome,
+            "especialidade": prof.especialidade or "",
+            "num_alocacoes": num_alocacoes,
+            "carga_alocada": carga,
+            "carga_maxima": prof.carga_horaria_maxima or 0,
+            "percentual": percentual,
+        })
+    return dados
+
+
+def _qs_salas():
+    periodo = _periodo_ativo()
+    salas = Sala.objects.filter(ativo=True).order_by("nome")
+    dados = []
+    for sala in salas:
+        qs = Alocacao.objects.filter(sala=sala, status__in=STATUS_ATIVOS)
+        if periodo:
+            qs = qs.filter(periodo_letivo=periodo)
+        num_alocacoes = qs.count()
+        dados.append({
+            "nome": sala.nome,
+            "tipo_sala": sala.tipo_sala,
+            "capacidade_alunos": sala.capacidade_alunos,
+            "localizacao": sala.localizacao or "",
+            "num_alocacoes": num_alocacoes,
+            "em_uso": num_alocacoes > 0,
+        })
+    return dados
+
+
+def exportar_csv(request):
+    tipo = request.GET.get("tipo", "grade")
+    agora = datetime.now().strftime("%Y%m%d_%H%M")
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+
+    writer = csv.writer(response, delimiter=";")
+
+    if tipo == "professores":
+        response["Content-Disposition"] = f'attachment; filename="professores_{agora}.csv"'
+        writer.writerow(["Professor", "Especialidade", "Alocações", "Carga Alocada (h)", "Carga Máxima (h)", "Utilização (%)"])
+        for d in _qs_professores():
+            writer.writerow([d["nome"], d["especialidade"], d["num_alocacoes"],
+                             d["carga_alocada"], d["carga_maxima"], d["percentual"]])
+
+    elif tipo == "salas":
+        response["Content-Disposition"] = f'attachment; filename="salas_{agora}.csv"'
+        writer.writerow(["Sala", "Tipo", "Capacidade", "Localização", "Alocações", "Status"])
+        for d in _qs_salas():
+            writer.writerow([d["nome"], d["tipo_sala"], d["capacidade_alunos"],
+                             d["localizacao"], d["num_alocacoes"],
+                             "Em uso" if d["em_uso"] else "Ociosa"])
+
+    else:
+        response["Content-Disposition"] = f'attachment; filename="grade_{agora}.csv"'
         writer.writerow([
-            DIAS_SEMANA.get(a.horario.dia_semana, a.horario.dia_semana),
-            a.horario.horario_inicio.strftime("%H:%M"),
-            a.horario.horario_fim.strftime("%H:%M"),
-            a.disciplina.nome,
-            a.professor.nome,
-            a.turma.nome,
-            a.sala.nome,
-            a.sala.capacidade_alunos,
-            a.turma.numero_alunos,
-            ociosos,
-            a.status,
+            "Dia da Semana", "Horário Início", "Horário Fim",
+            "Disciplina", "Professor", "Turma",
+            "Sala", "Capacidade Sala", "N. Alunos", "Assentos Ociosos", "Status",
         ])
+        for a in _qs_grade_filtrada(request):
+            ociosos = max(a.sala.capacidade_alunos - a.turma.numero_alunos, 0)
+            writer.writerow([
+                DIAS_SEMANA.get(a.horario.dia_semana, a.horario.dia_semana),
+                a.horario.horario_inicio.strftime("%H:%M"),
+                a.horario.horario_fim.strftime("%H:%M"),
+                a.disciplina.nome,
+                a.professor.nome,
+                a.turma.nome,
+                a.sala.nome,
+                a.sala.capacidade_alunos,
+                a.turma.numero_alunos,
+                ociosos,
+                a.status,
+            ])
 
     return response
+
+
+def _pdf_estilo_tabela(colors):
+    return TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a5f")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 9),
+        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 1), (-1, -1), 8),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f0f4f8")]),
+        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c8d6e5")),
+        ("BOX", (0, 0), (-1, -1), 1.0, colors.HexColor("#1e3a5f")),
+    ])
 
 
 def exportar_pdf(request):
@@ -331,75 +418,89 @@ def exportar_pdf(request):
             status=500,
         )
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(A4),
-        rightMargin=1.5 * cm,
-        leftMargin=1.5 * cm,
-        topMargin=2.0 * cm,
-        bottomMargin=2.0 * cm,
-        title="Grade Horária — SisAloc",
-    )
+    tipo = request.GET.get("tipo", "grade")
+    agora = datetime.now()
+    agora_str = agora.strftime("%Y%m%d_%H%M")
+    agora_fmt = agora.strftime("%d/%m/%Y às %H:%M")
 
     estilos = getSampleStyleSheet()
     estilo_titulo = ParagraphStyle(
         "titulo",
         parent=estilos["Heading1"],
-        fontSize=18,
+        fontSize=16,
         textColor=colors.HexColor("#1e3a5f"),
         alignment=TA_CENTER,
         spaceAfter=4,
     )
 
+    buffer = io.BytesIO()
+
+    if tipo == "professores":
+        doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                rightMargin=1.5*cm, leftMargin=1.5*cm,
+                                topMargin=2.0*cm, bottomMargin=2.0*cm,
+                                title="Carga Horária dos Professores — SisAloc")
+        cabecalho = ["Professor", "Especialidade", "Alocações", "Carga Aloc. (h)", "Carga Máx. (h)", "Utiliz. (%)"]
+        linhas = [cabecalho]
+        for d in _qs_professores():
+            linhas.append([d["nome"], d["especialidade"], str(d["num_alocacoes"]),
+                           str(d["carga_alocada"]), str(d["carga_maxima"]), f"{d['percentual']}%"])
+        if len(linhas) == 1:
+            linhas.append(["Nenhum professor ativo", "", "", "", "", ""])
+        col_widths = [5.5*cm, 4.0*cm, 2.5*cm, 3.0*cm, 3.0*cm, 2.5*cm]
+        nome_arquivo = f"professores_{agora_str}.pdf"
+        titulo_doc = "Carga Horária dos Professores"
+
+    elif tipo == "salas":
+        doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                rightMargin=1.5*cm, leftMargin=1.5*cm,
+                                topMargin=2.0*cm, bottomMargin=2.0*cm,
+                                title="Ocupação de Salas — SisAloc")
+        cabecalho = ["Sala", "Tipo", "Capacidade", "Localização", "Alocações", "Status"]
+        linhas = [cabecalho]
+        for d in _qs_salas():
+            linhas.append([d["nome"], d["tipo_sala"], str(d["capacidade_alunos"]),
+                           d["localizacao"], str(d["num_alocacoes"]),
+                           "Em uso" if d["em_uso"] else "Ociosa"])
+        if len(linhas) == 1:
+            linhas.append(["Nenhuma sala ativa", "", "", "", "", ""])
+        col_widths = [4.5*cm, 3.0*cm, 2.5*cm, 4.0*cm, 2.5*cm, 2.5*cm]
+        nome_arquivo = f"salas_{agora_str}.pdf"
+        titulo_doc = "Ocupação de Salas"
+
+    else:
+        doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                                rightMargin=1.5*cm, leftMargin=1.5*cm,
+                                topMargin=2.0*cm, bottomMargin=2.0*cm,
+                                title="Grade Horária — SisAloc")
+        cabecalho = ["Dia", "Início", "Fim", "Disciplina", "Professor", "Turma", "Sala", "Alunos"]
+        linhas = [cabecalho]
+        for a in _qs_grade_filtrada(request):
+            linhas.append([
+                DIAS_SEMANA_ABREV.get(a.horario.dia_semana, ""),
+                a.horario.horario_inicio.strftime("%H:%M"),
+                a.horario.horario_fim.strftime("%H:%M"),
+                a.disciplina.nome,
+                a.professor.nome,
+                a.turma.nome,
+                a.sala.nome,
+                str(a.turma.numero_alunos),
+            ])
+        if len(linhas) == 1:
+            linhas.append(["Sem alocações ativas", "", "", "", "", "", "", ""])
+        col_widths = [1.8*cm, 1.8*cm, 1.8*cm, 5.5*cm, 5.0*cm, 3.5*cm, 3.5*cm, 2.0*cm]
+        nome_arquivo = f"grade_{agora_str}.pdf"
+        titulo_doc = "Grade Horária"
+
+    tabela = Table(linhas, colWidths=col_widths, repeatRows=1)
+    tabela.setStyle(_pdf_estilo_tabela(colors))
+
     elementos = [
-        Paragraph("Grade Horária Completa", estilo_titulo),
-        Paragraph(
-            f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}",
-            estilos["Normal"],
-        ),
+        Paragraph(titulo_doc, estilo_titulo),
+        Paragraph(f"Gerado em {agora_fmt}", estilos["Normal"]),
         Spacer(1, 0.4 * cm),
+        tabela,
     ]
-
-    cabecalho = ["Dia", "Início", "Fim", "Disciplina", "Professor", "Turma", "Sala", "Alunos"]
-    alocacoes = (
-        Alocacao.objects
-        .filter(status__in=STATUS_ATIVOS)
-        .select_related("horario", "disciplina", "professor", "turma", "sala")
-        .order_by("horario__dia_semana", "horario__horario_inicio")
-    )
-
-    dados = [cabecalho]
-    for a in alocacoes:
-        dados.append([
-            DIAS_SEMANA_ABREV.get(a.horario.dia_semana, ""),
-            a.horario.horario_inicio.strftime("%H:%M"),
-            a.horario.horario_fim.strftime("%H:%M"),
-            a.disciplina.nome,
-            a.professor.nome,
-            a.turma.nome,
-            a.sala.nome,
-            str(a.turma.numero_alunos),
-        ])
-
-    if len(dados) == 1:
-        dados.append(["Sem alocações ativas", "", "", "", "", "", "", ""])
-
-    col_widths = [1.8*cm, 1.8*cm, 1.8*cm, 5.5*cm, 5.0*cm, 3.5*cm, 3.5*cm, 2.0*cm]
-    tabela = Table(dados, colWidths=col_widths, repeatRows=1)
-    tabela.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a5f")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 9),
-        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f0f4f8")]),
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c8d6e5")),
-        ("BOX", (0, 0), (-1, -1), 1.0, colors.HexColor("#1e3a5f")),
-    ]))
-    elementos.append(tabela)
 
     try:
         doc.build(elementos)
@@ -409,7 +510,6 @@ def exportar_pdf(request):
         return HttpResponse(f"Erro ao gerar PDF: {exc}", status=500)
 
     buffer.seek(0)
-    nome = f"grade_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
     response = HttpResponse(buffer, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{nome}"'
+    response["Content-Disposition"] = f'attachment; filename="{nome_arquivo}"'
     return response
