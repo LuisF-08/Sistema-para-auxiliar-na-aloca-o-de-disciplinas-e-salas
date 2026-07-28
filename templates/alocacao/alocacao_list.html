@@ -1,1 +1,340 @@
-{% extends 'base.html' %}{% block content %}<h4>Alocações</h4>{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}SADAS - Nova Alocação{% endblock %}
+
+{% block content %}
+<div class="allocation-page">
+  <div class="allocation-header">
+    <h1 class="page-title">Nova Alocação</h1>
+    <p class="page-subtitle">Preencha os dados para criar uma nova alocação de disciplina</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section class="allocation-card">
+        <div class="section-title">1. Disciplina e Turma</div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Disciplina *</label>
+            <select class="form-select">
+              <option selected>Selecione uma disciplina</option>
+              <option>CC-301 — Algoritmos e Estruturas de Dados</option>
+              <option>MAT-101 — Cálculo Diferencial e Integral I</option>
+              <option>CC-310 — Programação Web</option>
+              <option>CC-320 — Banco de Dados</option>
+              <option>CC-330 — Redes de Computadores</option>
+              <option>CC-450 — Inteligência Artificial</option>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Turma *</label>
+            <select class="form-select">
+              <option selected>Selecione a turma</option>
+              <option>CC-2A</option>
+              <option>CC-2B</option>
+              <option>CC-3A</option>
+              <option>CC-3B</option>
+              <option>ENG-1A</option>
+              <option>ENG-1B</option>
+              <option>ENG-2A</option>
+              <option>SI-2A</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nº de Alunos *</label>
+            <input type="number" class="form-control" placeholder="Ex: 32">
+          </div>
+        </div>
+      </section>
+
+      <section class="allocation-card">
+        <div class="section-title">2. Professor</div>
+
+        <div class="prof-card disabled">
+          <div class="prof-left">
+            <div class="avatar">M</div>
+            <div>
+              <div class="prof-name">Dr. Marcos Andrade</div>
+              <div class="prof-status status-conflict">Conflito: Seg 08h–10h já alocado</div>
+            </div>
+          </div>
+          <i class="bi bi-x-circle-fill status-icon conflict"></i>
+        </div>
+
+        <div class="prof-card">
+          <div class="prof-left">
+            <div class="avatar">B</div>
+            <div>
+              <div class="prof-name">Profa. Beatriz Lima</div>
+              <div class="prof-status status-ok">Disponível neste horário</div>
+            </div>
+          </div>
+          <i class="bi bi-check-circle-fill status-icon ok"></i>
+        </div>
+
+        <div class="prof-card">
+          <div class="prof-left">
+            <div class="avatar">R</div>
+            <div>
+              <div class="prof-name">Dr. Rafael Costa</div>
+              <div class="prof-status status-ok">Disponível neste horário</div>
+            </div>
+          </div>
+          <i class="bi bi-check-circle-fill status-icon ok"></i>
+        </div>
+
+        <div class="prof-card disabled">
+          <div class="prof-left">
+            <div class="avatar">J</div>
+            <div>
+              <div class="prof-name">Profa. Juliana Reis</div>
+              <div class="prof-status status-conflict">Conflito: Qua 08h–10h já alocado</div>
+            </div>
+          </div>
+          <i class="bi bi-x-circle-fill status-icon conflict"></i>
+        </div>
+
+        <div class="prof-card">
+          <div class="prof-left">
+            <div class="avatar">L</div>
+            <div>
+              <div class="prof-name">Dr. Lucas Ferreira</div>
+              <div class="prof-status status-ok">Disponível neste horário</div>
+            </div>
+          </div>
+          <i class="bi bi-check-circle-fill status-icon ok"></i>
+        </div>
+
+        <div class="prof-card">
+          <div class="prof-left">
+            <div class="avatar">A</div>
+            <div>
+              <div class="prof-name">Profa. Ana Paula</div>
+              <div class="prof-status status-ok">Disponível neste horário</div>
+            </div>
+          </div>
+          <i class="bi bi-check-circle-fill status-icon ok"></i>
+        </div>
+      </section>
+
+      <section class="allocation-card">
+        <div class="section-title">3. Horário</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Dia da Semana *</label>
+            <select class="form-select">
+              <option selected>Selecione o dia</option>
+              <option>Segunda</option>
+              <option>Terça</option>
+              <option>Quarta</option>
+              <option>Quinta</option>
+              <option>Sexta</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Horário *</label>
+            <select class="form-select">
+              <option selected>Selecione o horário</option>
+              <option>07:00–09:00</option>
+              <option>08:00–10:00</option>
+              <option>09:00–11:00</option>
+              <option>10:00–12:00</option>
+              <option>13:00–15:00</option>
+              <option>14:00–16:00</option>
+              <option>15:00–17:00</option>
+              <option>16:00–18:00</option>
+              <option>18:00–20:00</option>
+              <option>19:00–21:00</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="allocation-card">
+        <div class="section-title">4. Sala</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="room-card selected" data-room="Lab-3">
+              <div>
+                <div class="room-name">Lab-3</div>
+                <div class="room-meta">Laboratório · 35 lugares</div>
+              </div>
+              <span class="badge-available">Disponível</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="room-card unavailable" data-room="A-102">
+              <div>
+                <div class="room-name">A-102</div>
+                <div class="room-meta">Sala de Aula · 50 lugares</div>
+              </div>
+              <span class="badge-unavailable">Ocupada</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="room-card" data-room="Lab-4">
+              <div>
+                <div class="room-name">Lab-4</div>
+                <div class="room-meta">Laboratório · 30 lugares</div>
+              </div>
+              <span class="badge-available">Disponível</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="room-card" data-room="B-305">
+              <div>
+                <div class="room-name">B-305</div>
+                <div class="room-meta">Sala de Aula · 40 lugares</div>
+              </div>
+              <span class="badge-available">Disponível</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="room-card" data-room="A-201">
+              <div>
+                <div class="room-name">A-201</div>
+                <div class="room-meta">Sala de Aula · 50 lugares</div>
+              </div>
+              <span class="badge-available">Disponível</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="room-card unavailable" data-room="Lab-1">
+              <div>
+                <div class="room-name">Lab-1</div>
+                <div class="room-meta">Laboratório · 20 lugares</div>
+              </div>
+              <span class="badge-unavailable">Ocupada</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="actions-bar">
+        <button type="button" class="btn-verify">Verificar Conflitos</button>
+        <button type="button" class="btn-create">Criar Alocação</button>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <aside class="allocation-summary-card">
+        <div class="summary-title">Resumo da Alocação</div>
+        <div class="summary-row">
+          <span class="summary-label">Disciplina</span>
+          <span class="summary-value empty" id="sum-disciplina">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Professor</span>
+          <span class="summary-value empty" id="sum-professor">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Turma</span>
+          <span class="summary-value empty" id="sum-turma">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Alunos</span>
+          <span class="summary-value empty" id="sum-alunos">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Dia</span>
+          <span class="summary-value empty" id="sum-dia">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Horário</span>
+          <span class="summary-value empty" id="sum-horario">—</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Sala</span>
+          <span class="summary-value" id="sum-sala">Lab-3</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.room-card:not(.unavailable)').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('.room-card').forEach(function(item){ item.classList.remove('selected'); });
+      this.classList.add('selected');
+      document.getElementById('sum-sala').textContent = this.dataset.room;
+      document.getElementById('sum-sala').classList.remove('empty');
+    });
+  });
+
+  document.querySelectorAll('.prof-card:not(.disabled)').forEach(function(card){
+    card.addEventListener('click', function(){
+      document.querySelectorAll('.prof-card').forEach(function(item){
+        item.style.boxShadow = '';
+        item.style.borderColor = 'var(--card-border)';
+      });
+      this.style.borderColor = '#1b2a4a';
+      this.style.boxShadow = '0 0 0 2px rgba(27,42,74,.15)';
+      var name = this.querySelector('.prof-name').textContent;
+      document.getElementById('sum-professor').textContent = name;
+      document.getElementById('sum-professor').classList.remove('empty');
+    });
+  });
+
+  var selects = document.querySelectorAll('.allocation-card select');
+  selects[0].addEventListener('change', function(){
+    var value = this.value;
+    var target = document.getElementById('sum-disciplina');
+    if (value.indexOf('Selecione') === 0) {
+      target.textContent = '—';
+      target.classList.add('empty');
+    } else {
+      target.textContent = value;
+      target.classList.remove('empty');
+    }
+  });
+
+  selects[1].addEventListener('change', function(){
+    var value = this.value;
+    var target = document.getElementById('sum-turma');
+    if (value.indexOf('Selecione') === 0) {
+      target.textContent = '—';
+      target.classList.add('empty');
+    } else {
+      target.textContent = value;
+      target.classList.remove('empty');
+    }
+  });
+
+  selects[2].addEventListener('change', function(){
+    var value = this.value;
+    var target = document.getElementById('sum-dia');
+    if (value.indexOf('Selecione') === 0) {
+      target.textContent = '—';
+      target.classList.add('empty');
+    } else {
+      target.textContent = value;
+      target.classList.remove('empty');
+    }
+  });
+
+  selects[3].addEventListener('change', function(){
+    var value = this.value;
+    var target = document.getElementById('sum-horario');
+    if (value.indexOf('Selecione') === 0) {
+      target.textContent = '—';
+      target.classList.add('empty');
+    } else {
+      target.textContent = value;
+      target.classList.remove('empty');
+    }
+  });
+
+  document.querySelector('input[type="number"]').addEventListener('input', function(){
+    var target = document.getElementById('sum-alunos');
+    if (this.value) {
+      target.textContent = this.value;
+      target.classList.remove('empty');
+    } else {
+      target.textContent = '—';
+      target.classList.add('empty');
+    }
+  });
+</script>
+{% endblock %}
+ 
