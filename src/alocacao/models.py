@@ -9,15 +9,18 @@ STATUS_ATIVOS_ALOCACAO = ["planejada", "confirmada"]
 
 
 class Horario(models.Model):
-    class DiaSemana(models.IntegerChoices):
-        SEGUNDA = 1, "segunda-feira"
-        TERCA = 2, "terca-feira"
-        QUARTA = 3, "quarta-feira"
-        QUINTA = 4, "quinta-feira"
-        SEXTA = 5, "sexta-feira"
-        SABADO = 6, "sabado"
+    class DiaSemana(models.TextChoices):
+        SEGUNDA = '1', 'Segunda-feira'
+        TERCA = '2', 'Terça-feira'
+        QUARTA = '3', 'Quarta-feira'
+        QUINTA = '4', 'Quinta-feira'
+        SEXTA = '5', 'Sexta-feira'
+        SABADO = '6', 'Sábado'
 
-    dia_semana = models.PositiveSmallIntegerField(choices=DiaSemana.choices)
+    dia_semana = models.CharField(
+        max_length=1,
+        choices=DiaSemana.choices
+    )
     horario_inicio = models.TimeField()
     horario_fim = models.TimeField()
     ativo = models.BooleanField(default=True)
@@ -26,23 +29,13 @@ class Horario(models.Model):
 
     class Meta:
         ordering = ["dia_semana", "horario_inicio"]
-        verbose_name = "horario"
-        verbose_name_plural = "horarios"
+        verbose_name = "horário"
+        verbose_name_plural = "horários"
         constraints = [
             models.UniqueConstraint(
                 fields=["dia_semana", "horario_inicio", "horario_fim"],
-                name="horario_faixa_unica",
-            ),
-            models.CheckConstraint(
-                condition=Q(horario_fim__gt=models.F("horario_inicio")),
-                name="horario_fim_maior_inicio",
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["dia_semana", "horario_inicio"],
-                name="horario_dia_inicio_idx",
-            ),
+                name="horario_faixa_unica"
+            )
         ]
 
     def __str__(self):
