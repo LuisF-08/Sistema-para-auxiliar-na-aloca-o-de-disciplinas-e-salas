@@ -1,1 +1,412 @@
-{% extends 'base.html' %}{% block content %}<h4>Alocações</h4>{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}SADAS - Nova Alocação{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+  <div class="mb-4">
+    <h2 class="fw-bold m-0" style="font-size: 24px; color: #0F172A;">Nova Alocação</h2>
+    <p class="text-muted small mt-1 mb-0" style="color: #64748B !important;">Preencha os dados para criar uma nova alocação de disciplina</p>
+  </div>
+
+  <form method="POST" action="{% url 'alocacao:alocacao_create' %}" id="form-alocacao">
+    {% csrf_token %}
+    <input type="hidden" name="professor" id="input-professor" value="">
+    <input type="hidden" name="sala" id="input-sala" value="">
+
+    <div class="row g-4">
+
+      <div class="col-12 col-lg-8">
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
+          <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">1. Disciplina e Turma</h6>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-bold mb-1" style="color: #334155;">Disciplina *</label>
+              <select name="disciplina" id="select-disciplina" class="form-select border-0" style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;" required>
+                <option value="" selected>Selecione uma disciplina</option>
+                {% for disciplina in disciplinas %}
+                  <option value="{{ disciplina.id }}">{{ disciplina.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label small fw-bold mb-1" style="color: #334155;">Turma *</label>
+              <select name="turma" id="select-turma" class="form-select border-0" style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;" required>
+                <option value="" selected>Selecione a turma</option>
+                {% for turma in turmas %}
+                  <option value="{{ turma.id }}" data-alunos="{{ turma.numero_alunos }}">
+                    {{ turma.nome }} — {{ turma.curso.nome }} ({{ turma.numero_alunos }} alunos)
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small fw-bold mb-1" style="color: #334155;">Nº de Alunos *</label>
+              <input type="number" name="num_alunos" id="input-alunos" class="form-control border-0" style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;" placeholder="Ex: 32">
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
+          <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">2. Professor</h6>
+          <div class="d-flex flex-column gap-2">
+            {% for professor in professores %}
+              <div class="prof-item d-flex justify-content-between align-items-center p-3 border rounded-3" 
+                   style="cursor: pointer; border-color: #E2E8F0 !important;" 
+                   onclick="selecionarProf(this, '{{ professor.id }}', '{{ professor.nome }}')">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; background-color: #1E293B; font-size: 14px;">
+                    {{ professor.nome|slice:":1" }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark small">{{ professor.nome }}</div>
+                    <div class="text-success small fw-semibold status-text" style="font-size: 12px;">Disponível neste horário</div>
+                  </div>
+                </div>
+                <i class="status-icon bi bi-check-circle text-success fs-5"></i>
+              </div>
+            {% empty %}
+              <div class="prof-item d-flex justify-content-between align-items-center p-3 border rounded-3 opacity-50" style="background-color: #FAFAFA; border-color: #E2E8F0 !important; cursor: not-allowed;">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center text-secondary fw-bold" style="width: 38px; height: 38px; background-color: #CBD5E1; font-size: 14px;">M</div>
+                  <div>
+                    <div class="fw-bold text-secondary small">Dr. Marcos Andrade</div>
+                    <div class="status-text text-danger small fw-semibold" style="font-size: 12px;">Conflito: Seg 08h–10h já alocado</div>
+                  </div>
+                </div>
+                <i class="status-icon bi bi-x-circle text-danger fs-5"></i>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
+          <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">3. Horário</h6>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1" style="color: #334155;">Dia da Semana *</label>
+              <select name="dia_semana" id="select-dia" class="form-select">
+                  <option value="" selected disabled>Selecione o dia</option>
+                  <option value="segunda">Segunda-feira</option>
+                  <option value="terca">Terça-feira</option>
+                  <option value="quarta">Quarta-feira</option>
+                  <option value="quinta">Quinta-feira</option>
+                  <option value="sexta">Sexta-feira</option>
+                  <option value="sabado">Sábado</option>
+            </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label small fw-bold mb-1" style="color: #334155;">Horário *</label>
+              <select name="horario" id="select-horario" class="form-select border-0" style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;" required>
+                <option value="" selected>Selecione o horário</option>
+                {% for horario in horarios %}
+                  <option value="{{ horario.id }}">{{ horario.horario_inicio|time:"H:i" }} – {{ horario.horario_fim|time:"H:i" }}</option>
+                {% empty %}
+                  <option value="08:00 - 10:00">08:00 – 10:00</option>
+                  <option value="10:00 - 12:00">10:00 – 12:00</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
+          <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">4. Sala</h6>
+          
+          <div id="alerta-capacidade" class="alert alert-danger d-none mb-3 py-2 small" role="alert"></div>
+
+        <div class="row g-3">
+              {% for sala in salas %}
+                <div class="col-12 col-md-6">
+                  <div class="room-item d-flex justify-content-between align-items-center p-3 border rounded-3" 
+                      style="cursor: pointer; border-color: #E2E8F0 !important;" 
+                      data-sala-id="{{ sala.id }}"
+                      data-capacidade="{{ sala.capacidade_alunos }}"
+                      onclick="selecionarSala(this, '{{ sala.id }}', '{{ sala.nome }}', '{{ sala.capacidade_alunos }}')">
+                    <div>
+                      <div class="fw-bold text-dark small">{{ sala.nome }}</div>
+                      <div class="text-muted small" style="font-size: 12px;">{{ sala.tipo_sala|default:"Sala" }} · {{ sala.capacidade_alunos }} lugares</div>
+                    </div>
+                    <span class="status-badge badge bg-success-subtle text-success px-2 py-1 border border-success-subtle rounded-2" style="font-size: 11px;">Disponível</span>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="col-12">
+                  <p class="text-muted small">Nenhuma sala cadastrada.</p>
+                </div>
+              {% endfor %}
+            </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-12 col-md-4">
+            <button type="button" class="btn w-100 bg-white border fw-semibold text-secondary py-2" style="border-radius: 8px; border-color: #CBD5E1 !important; font-size: 14px;">
+              Verificar Conflitos
+            </button>
+          </div>
+          <div class="col-12 col-md-8">
+            <button type="submit" id="btn-submit-alocacao" class="btn w-100 fw-semibold text-white py-2" style="background-color: #94A3B8; border-radius: 8px; font-size: 14px; border: none; cursor: not-allowed;" disabled>
+              Criar Alocação
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm p-4 position-sticky" style="top: 20px; border-radius: 12px; background: #FFFFFF;">
+          <h6 class="fw-bold mb-4" style="font-size: 15px; color: #0F172A;">Resumo da Alocação</h6>
+
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Disciplina</span>
+            <span class="fw-bold text-dark" id="sum-disciplina">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Professor</span>
+            <span class="fw-bold text-dark" id="sum-professor">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Turma</span>
+            <span class="fw-bold text-dark" id="sum-turma">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Alunos</span>
+            <span class="fw-bold text-dark" id="sum-alunos">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Dia</span>
+            <span class="fw-bold text-dark" id="sum-dia">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom" style="border-color: #F1F5F9 !important; font-size: 13px;">
+            <span class="text-secondary">Horário</span>
+            <span class="fw-bold text-dark" id="sum-horario">—</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2" style="font-size: 13px;">
+            <span class="text-secondary">Sala</span>
+            <span class="fw-bold text-dark" id="sum-sala">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  let capacidadeSalaSelecionada = 0;
+
+  function validarFormulario() {
+    const disciplina = document.getElementById('select-disciplina')?.value;
+    const turmaSelect = document.getElementById('select-turma');
+    const turmaId = turmaSelect?.value;
+    const dia = document.getElementById('select-dia')?.value;
+    const horario = document.getElementById('select-horario')?.value;
+    
+    const professor = document.getElementById('input-professor')?.value;
+    const sala = document.getElementById('input-sala')?.value;
+    const btnSubmit = document.getElementById('btn-submit-alocacao');
+    const alertaCapacidade = document.getElementById('alerta-capacidade');
+
+  
+    let numAlunos = 0;
+    if (turmaSelect && turmaSelect.selectedIndex > 0) {
+      const selectedOption = turmaSelect.options[turmaSelect.selectedIndex];
+      numAlunos = parseInt(selectedOption.getAttribute('data-alunos')) || 0;
+      const inputAlunos = document.getElementById('input-alunos');
+      if (inputAlunos && !inputAlunos.value) {
+        inputAlunos.value = numAlunos;
+      }
+    }
+
+    let excedeuCapacidade = false;
+    if (sala && numAlunos > 0 && capacidadeSalaSelecionada > 0) {
+      if (numAlunos > capacidadeSalaSelecionada) {
+        excedeuCapacidade = true;
+        if (alertaCapacidade) {
+          alertaCapacidade.classList.remove('d-none');
+          alertaCapacidade.innerText = `⚠️ Atenção: A turma possui ${numAlunos} alunos, mas a sala selecionada suporta apenas ${capacidadeSalaSelecionada} lugares!`;
+        }
+      } else {
+        if (alertaCapacidade) alertaCapacidade.classList.add('d-none');
+      }
+    } else {
+      if (alertaCapacidade) alertaCapacidade.classList.add('d-none');
+    }
+
+    const formValido = Boolean(
+      disciplina && disciplina !== "" &&
+      turmaId && turmaId !== "" &&
+      dia && dia !== "" &&
+      horario && horario !== "" &&
+      professor && professor !== "" &&
+      sala && sala !== "" &&
+      !excedeuCapacidade
+    );
+
+    if (btnSubmit) {
+      if (formValido) {
+        btnSubmit.disabled = false;
+        btnSubmit.style.backgroundColor = '#2563EB';
+        btnSubmit.style.cursor = 'pointer';
+      } else {
+        btnSubmit.disabled = true;
+        btnSubmit.style.backgroundColor = '#94A3B8';
+        btnSubmit.style.cursor = 'not-allowed';
+      }
+    }
+  }
+
+  document.querySelectorAll('select, input').forEach(element => {
+    element.addEventListener('change', validarFormulario);
+    element.addEventListener('input', validarFormulario);
+  });
+
+  document.getElementById('select-disciplina')?.addEventListener('change', validarFormulario);
+  document.getElementById('select-turma')?.addEventListener('change', () => {
+    const turmaSelect = document.getElementById('select-turma');
+    if (turmaSelect.selectedIndex > 0) {
+      const opt = turmaSelect.options[turmaSelect.selectedIndex];
+      const alunos = opt.getAttribute('data-alunos');
+      const inputAlunos = document.getElementById('input-alunos');
+      if (inputAlunos) inputAlunos.value = alunos;
+    }
+    validarFormulario();
+  });
+  document.getElementById('input-alunos')?.addEventListener('input', validarFormulario);
+  document.getElementById('select-dia')?.addEventListener('change', () => {
+    validarFormulario();
+    verificarDisponibilidade();
+  });
+  document.getElementById('select-horario')?.addEventListener('change', () => {
+    validarFormulario();
+    verificarDisponibilidade();
+  });
+
+  function verificarDisponibilidade() {
+    const dia = document.getElementById('select-dia').value;
+    const horarioId = document.getElementById('select-horario').value;
+
+    if (!dia || !horarioId) return;
+
+    fetch(`/api/alocacoes/?dia_semana=${encodeURIComponent(dia)}&horario=${horarioId}`)
+      .then(res => res.json())
+      .then(alocacoes => {
+        const professoresOcupados = alocacoes.map(a => typeof a.professor === 'object' ? a.professor.id : a.professor);
+        const salasOcupadas = alocacoes.map(a => typeof a.sala === 'object' ? a.sala.id : a.sala);
+
+        document.querySelectorAll('.prof-item').forEach(item => {
+          const profId = parseInt(item.getAttribute('data-prof-id'));
+          const statusText = item.querySelector('.status-text');
+          const statusIcon = item.querySelector('.status-icon');
+
+          if (professoresOcupados.includes(profId)) {
+            item.classList.add('opacity-50');
+            item.style.cursor = 'not-allowed';
+            item.style.backgroundColor = '#FAFAFA';
+            if (statusText) {
+              statusText.className = 'status-text text-danger small fw-semibold';
+              statusText.innerText = 'Conflito: Indisponível neste horário';
+            }
+            if (statusIcon) {
+              statusIcon.className = 'status-icon bi bi-x-circle text-danger fs-5';
+            }
+          } else {
+            item.classList.remove('opacity-50');
+            item.style.cursor = 'pointer';
+            item.style.backgroundColor = '#FFFFFF';
+            if (statusText) {
+              statusText.className = 'status-text text-success small fw-semibold';
+              statusText.innerText = 'Disponível neste horário';
+            }
+            if (statusIcon) {
+              statusIcon.className = 'status-icon bi bi-check-circle text-success fs-5';
+            }
+          }
+        });
+
+        document.querySelectorAll('.room-item').forEach(item => {
+          const salaId = parseInt(item.getAttribute('data-sala-id'));
+          const badge = item.querySelector('.status-badge');
+
+          if (salasOcupadas.includes(salaId)) {
+            item.classList.add('opacity-50');
+            item.style.cursor = 'not-allowed';
+            item.style.backgroundColor = '#FAFAFA';
+            if (badge) {
+              badge.className = 'status-badge badge bg-danger-subtle text-danger px-2 py-1 rounded-2';
+              badge.innerText = 'Ocupada';
+            }
+          } else {
+            item.classList.remove('opacity-50');
+            item.style.cursor = 'pointer';
+            item.style.backgroundColor = '#FFFFFF';
+            if (badge) {
+              badge.className = 'status-badge badge bg-success-subtle text-success px-2 py-1 rounded-2';
+              badge.innerText = 'Disponível';
+            }
+          }
+        });
+      })
+      .catch(err => console.error("Erro ao verificar disponibilidade via API:", err));
+  }
+
+  function selecionarProf(el, id, nome) {
+    document.querySelectorAll('.prof-item').forEach(i => {
+      if (!i.classList.contains('opacity-50')) {
+        i.style.borderColor = '#E2E8F0';
+        i.style.backgroundColor = '#FFFFFF';
+      }
+    });
+    el.style.borderColor = '#0F172A';
+    el.style.backgroundColor = '#F8FAFC';
+    document.getElementById('input-professor').value = id;
+    document.getElementById('sum-professor').innerText = nome;
+    validarFormulario();
+  }
+
+  function selecionarSala(el, id, nome, capacidade) {
+    document.querySelectorAll('.room-item').forEach(i => {
+      if (!i.classList.contains('opacity-50')) {
+        i.style.borderColor = '#E2E8F0';
+        i.style.backgroundColor = '#FFFFFF';
+      }
+    });
+    el.style.borderColor = '#0F172A';
+    el.style.backgroundColor = '#F8FAFC';
+    document.getElementById('input-sala').value = id;
+    document.getElementById('sum-sala').innerText = `${nome} (${capacidade} lugares)`;
+    
+    capacidadeSalaSelecionada = parseInt(capacidade) || 0;
+    validarFormulario();
+  }
+
+  function escutarMudanca(idSelect, idResumo) {
+    const campo = document.getElementById(idSelect);
+    if (!campo) return;
+    
+    const atualizar = () => {
+      let texto = '—';
+      if (campo.tagName === 'SELECT' && campo.selectedIndex > 0) {
+        texto = campo.options[campo.selectedIndex].text;
+      } else if (campo.value) {
+        texto = campo.value;
+      }
+      const elementoResumo = document.getElementById(idResumo);
+      elementoResumo.innerText = texto;
+    };
+
+    campo.addEventListener('change', atualizar);
+    if (campo.tagName === 'INPUT') {
+      campo.addEventListener('input', atualizar);
+    }
+  }
+
+  escutarMudanca('select-disciplina', 'sum-disciplina');
+  escutarMudanca('select-turma', 'sum-turma');
+  escutarMudanca('select-dia', 'sum-dia');
+  escutarMudanca('select-horario', 'sum-horario');
+  escutarMudanca('input-alunos', 'sum-alunos');
+
+  validarFormulario();
+</script>
+{% endblock %}

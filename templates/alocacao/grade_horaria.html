@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid p-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1" style="font-size: 24px;">Grade Horária</h2>
+            <p class="text-secondary small mb-0">Semestre 2025.2 — visualização semanal</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <form method="GET" action="" id="form-filtro-curso">
+                <select name="curso" onchange="document.getElementById('form-filtro-curso').submit()" class="form-select border shadow-sm px-3 fw-medium" style="min-width: 220px; height: 40px; border-radius: 8px;">
+                    <option value="todos" {% if not curso_selecionado or curso_selecionado == 'todos' %}selected{% endif %}>Todos os Cursos</option>
+                    {% for curso in cursos %}
+                        <option value="{{ curso.id }}" {% if curso.id|stringformat:"s" == curso_selecionado %}selected{% endif %}>{{ curso.nome }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <button class="btn btn-white border shadow-sm d-flex align-items-center gap-2 bg-white fw-medium" style="height: 40px; border-radius: 8px;">
+                <i class="bi bi-funnel"></i> Filtros
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-3 small text-secondary fw-medium">
+            <span class="d-flex align-items-center gap-1">
+                <span class="d-inline-block rounded-circle bg-primary" style="width:10px;height:10px;"></span> Sem conflito
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <span class="d-inline-block rounded-circle bg-danger" style="width:10px;height:10px;"></span> Conflito crítico
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <span class="d-inline-block rounded-circle bg-warning" style="width:10px;height:10px;"></span> Aviso
+            </span>
+        </div>
+
+        {% if total_conflitos and total_conflitos > 0 %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-semibold">
+                {{ total_conflitos }} conflitos detectados
+            </span>
+        {% else %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-semibold">
+                0 conflitos detectados
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0 text-center" style="border-color: #f1f5f9; table-layout: fixed;">
+                <thead>
+                    <tr>
+                         <th style="width: 90px; padding: 14px 8px; background-color: #1e293b;" class="text-uppercase fw-bold text-white-50 small">Horário</th>
+                         {% for dia in dias_semana %}
+                                <th style="padding: 14px 8px; background-color: #1e293b;" class="text-uppercase fw-bold text-white small">{{ dia }}</th>
+                         {% endfor %}
+                     </tr>
+                </thead>
+                <tbody class="bg-white">
+                    {% for linha in linhas_grade %}
+                    <tr>
+                        <td class="fw-semibold text-secondary bg-light-subtle align-middle" style="font-size: 12px;">
+                            {{ linha.hora }}
+                        </td>
+                        {% for celula in linha.celulas %}
+                        <td class="p-2 align-middle">
+                            {% for alocacao in celula.alocacoes %}
+
+                                {% if alocacao.tipo_conflito == 'critico' or alocacao.tem_conflito %}
+                                    <div class="p-2 text-start rounded position-relative mb-1 shadow-sm" style="background-color: #fef2f2; border: 1px solid #fecaca;">
+                                        <i class="bi bi-exclamation-triangle-fill text-danger position-absolute top-0 end-0 m-2" style="font-size: 11px;"></i>
+                                        <div class="fw-bold text-dark text-truncate pe-3" style="font-size: 12px;">{{ alocacao.disciplina.nome }}</div>
+                                        <div class="text-secondary text-truncate" style="font-size: 11px;">{{ alocacao.professor.nome }}</div>
+                                        <div class="text-danger fw-medium text-truncate" style="font-size: 11px;">{{ alocacao.sala.nome }} · {{ alocacao.turma.codigo|default:alocacao.turma.nome }}</div>
+                                    </div>
+
+                                {% elif alocacao.tipo_conflito == 'aviso' %}
+                                    <div class="p-2 text-start rounded position-relative mb-1 shadow-sm" style="background-color: #fffbeb; border: 1px solid #fef08a;">
+                                        <i class="bi bi-exclamation-triangle text-warning position-absolute top-0 end-0 m-2" style="font-size: 11px;"></i>
+                                        <div class="fw-bold text-dark text-truncate pe-3" style="font-size: 12px;">{{ alocacao.disciplina.nome }}</div>
+                                        <div class="text-secondary text-truncate" style="font-size: 11px;">{{ alocacao.professor.nome }}</div>
+                                        <div class="text-warning-emphasis fw-medium text-truncate" style="font-size: 11px;">{{ alocacao.sala.nome }} · {{ alocacao.turma.codigo|default:alocacao.turma.nome }}</div>
+                                    </div>
+
+                                {% else %}
+                                    <div class="p-2 text-start rounded mb-1 shadow-sm" style="background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                                        <div class="fw-bold text-dark text-truncate" style="font-size: 12px;">{{ alocacao.disciplina.nome }}</div>
+                                        <div class="text-secondary text-truncate" style="font-size: 11px;">{{ alocacao.professor.nome }}</div>
+                                        <div class="text-primary fw-medium text-truncate" style="font-size: 11px;">{{ alocacao.sala.nome }} · {{ alocacao.turma.codigo|default:alocacao.turma.nome }}</div>
+                                    </div>
+                                {% endif %}
+
+                            {% empty %}
+                                <span class="text-muted opacity-50" style="font-size: 12px;">—</span>
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

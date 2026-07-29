@@ -1,22 +1,26 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q, Sum  # sum e usado no clean() para calcular carga horaria
+from django.db.models import Q, Sum  
+from django.apps import apps
 
 
 STATUS_ATIVOS_ALOCACAO = ["planejada", "confirmada"]
 
 
 class Horario(models.Model):
-    class DiaSemana(models.IntegerChoices):
-        SEGUNDA = 1, "segunda-feira"
-        TERCA = 2, "terca-feira"
-        QUARTA = 3, "quarta-feira"
-        QUINTA = 4, "quinta-feira"
-        SEXTA = 5, "sexta-feira"
-        SABADO = 6, "sabado"
+    class DiaSemana(models.TextChoices):
+        SEGUNDA = '1', 'Segunda-feira'
+        TERCA = '2', 'Terça-feira'
+        QUARTA = '3', 'Quarta-feira'
+        QUINTA = '4', 'Quinta-feira'
+        SEXTA = '5', 'Sexta-feira'
+        SABADO = '6', 'Sábado'
 
-    dia_semana = models.PositiveSmallIntegerField(choices=DiaSemana.choices)
+    dia_semana = models.CharField(
+        max_length=1,
+        choices=DiaSemana.choices
+    )
     horario_inicio = models.TimeField()
     horario_fim = models.TimeField()
     ativo = models.BooleanField(default=True)
@@ -25,23 +29,13 @@ class Horario(models.Model):
 
     class Meta:
         ordering = ["dia_semana", "horario_inicio"]
-        verbose_name = "horario"
-        verbose_name_plural = "horarios"
+        verbose_name = "horário"
+        verbose_name_plural = "horários"
         constraints = [
             models.UniqueConstraint(
                 fields=["dia_semana", "horario_inicio", "horario_fim"],
-                name="horario_faixa_unica",
-            ),
-            models.CheckConstraint(
-                condition=Q(horario_fim__gt=models.F("horario_inicio")),
-                name="horario_fim_maior_inicio",
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["dia_semana", "horario_inicio"],
-                name="horario_dia_inicio_idx",
-            ),
+                name="horario_faixa_unica"
+            )
         ]
 
     def __str__(self):
@@ -128,16 +122,22 @@ class Alocacao(models.Model):
         ]
 
     def __str__(self):
-        return f"alocacao #{self.pk or 'nova'} [{self.status}]"
+        try:
+            return (
+            f"{self.disciplina} | {self.turma} | "
+            f"{self.sala} | {self.horario} [{self.status}]"
+        )
+        except Exception:
+            return f"alocacao #{self.pk or 'nova'} [{self.status}]"
 
     def clean(self):
         """valida regras de negocio que o banco nao consegue checar sozinho."""
-        # pessoas.models so e importado aqui para evitar importacao circular no nivel do modulo
-        from pessoas.models import DisponibilidadeProfessor
+        DisponibilidadeProfessor = apps.get_model('pessoas', 'DisponibilidadeProfessor')
 
+        if self.status == self.Status.CANCELADA:
+            return
         erros = {}
 
-        # o periodo letivo da turma precisa ser o mesmo da alocacao
         if (
             self.periodo_letivo_id
             and self.turma_id
@@ -147,20 +147,16 @@ class Alocacao(models.Model):
                 "o periodo letivo informado e diferente do periodo da turma."
             ]
 
-        # as validacoes abaixo so se aplicam a alocacoes que geram ocupacao real
         if self.status in STATUS_ATIVOS_ALOCACAO:
             erros_sala = []
             erros_professor = []
 
-            # numero de alunos da turma nao pode superar a capacidade da sala
             if self.turma_id and self.sala_id:
                 if self.turma.numero_alunos > self.sala.capacidade_alunos:
                     erros_sala.append(
                         f"a turma tem {self.turma.numero_alunos} alunos, "
                         f"mas a sala comporta apenas {self.sala.capacidade_alunos}."
                     )
-
-            # sala nao pode ter duas aulas ativas no mesmo periodo/horario
             if self.sala_id and self.horario_id and self.periodo_letivo_id:
                 qs = Alocacao.objects.filter(
                     sala_id=self.sala_id,
@@ -175,7 +171,7 @@ class Alocacao(models.Model):
                         "a sala ja possui uma aula ativa neste horario e periodo."
                     )
 
-            # professor nao pode estar marcado como indisponivel neste horario
+
             if self.professor_id and self.horario_id:
                 if DisponibilidadeProfessor.objects.filter(
                     professor_id=self.professor_id,
@@ -186,7 +182,6 @@ class Alocacao(models.Model):
                         "o professor esta marcado como indisponivel neste horario."
                     )
 
-            # professor nao pode ter duas aulas ativas no mesmo periodo/horario
             if self.professor_id and self.horario_id and self.periodo_letivo_id:
                 qs = Alocacao.objects.filter(
                     professor_id=self.professor_id,
@@ -200,8 +195,6 @@ class Alocacao(models.Model):
                     erros_professor.append(
                         "o professor ja possui uma aula ativa neste horario e periodo."
                     )
-
-            # turma nao pode ter duas aulas ativas no mesmo periodo/horario
             if self.turma_id and self.horario_id and self.periodo_letivo_id:
                 qs = Alocacao.objects.filter(
                     turma_id=self.turma_id,
@@ -216,7 +209,6 @@ class Alocacao(models.Model):
                         "a turma ja possui uma aula ativa neste horario e periodo."
                     ]
 
-            # sala precisa possuir todos os recursos exigidos pela disciplina
             if self.disciplina_id and self.sala_id:
                 ids_exigidos = set(
                     self.disciplina.recursos_necessarios.values_list("id", flat=True)
@@ -234,14 +226,12 @@ class Alocacao(models.Model):
                             f"a sala nao possui os recursos exigidos: {nomes}."
                         )
 
-            # professor nao pode ultrapassar a carga horaria maxima no periodo
             if self.professor_id and self.disciplina_id and self.periodo_letivo_id:
                 qs = Alocacao.objects.filter(
                     professor_id=self.professor_id,
                     periodo_letivo_id=self.periodo_letivo_id,
                     status__in=STATUS_ATIVOS_ALOCACAO,
                 )
-                # ao editar, descontar a propria linha para nao contar em duplicata
                 if self.pk:
                     qs = qs.exclude(pk=self.pk)
                 carga_atual = (
@@ -265,6 +255,5 @@ class Alocacao(models.Model):
             raise ValidationError(erros)
 
     def save(self, *args, **kwargs):
-        """garante que as regras de negocio sao sempre validadas antes de salvar."""
         self.full_clean()
         super().save(*args, **kwargs)

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}SADAS - Cursos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-1">
+  <div>
+    <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif;">Cursos</h2>
+    <p class="text-secondary small mt-1 mb-0">{{ cursos|length }} registros cadastrados</p>
+  </div>
+  <button type="button" class="btn text-white px-3 fw-semibold d-flex align-items-center gap-2" 
+          data-bs-toggle="modal" data-bs-target="#cursoModal"
+          onclick="abrirModalCriar()"
+          style="background-color: #11346A; border-radius: 8px; height: 40px; font-size: 14px;">
+    <i class="bi bi-plus-lg"></i> Novo registro
+  </button>
+</div>
+
+{% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} py-2" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="my-4">
+  <div class="position-relative">
+    <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
+      <i class="bi bi-search"></i>
+    </span>
+    <input type="text" class="form-control border-0 py-2 ps-5 pe-3" id="buscarCursos" placeholder="Buscar cursos..."
+           style="background-color: #F0F2F5; border-radius: 8px; height: 44px; font-size: 14px;">
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0" style="font-family: system-ui, sans-serif;">
+      <thead style="background-color: #ffffff;">
+        <tr class="text-secondary" style="font-size: 12px; border-bottom: 1px solid #E9ECEF;">
+          <th class="ps-4 py-3 fw-semibold text-uppercase" style="width: 25%; letter-spacing: 0.5px;">Código</th>
+          <th class="py-3 fw-semibold text-uppercase" style="width: 50%; letter-spacing: 0.5px;">Nome</th>
+          <th class="text-end pe-4 py-3 fw-semibold text-uppercase" style="width: 25%; letter-spacing: 0.5px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for curso in cursos %}
+        <tr style="border-bottom: 1px solid #F1F3F5; font-size: 14px;">
+          <td class="ps-4 py-3 fw-bold text-dark">{{ curso.codigo|default:"—" }}</td>
+          <td class="py-3 text-secondary">{{ curso.nome }}</td>
+          <td class="text-end pe-4 py-3">
+            <button class="btn btn-link text-secondary p-1 me-2 shadow-none" title="Editar"
+              data-bs-toggle="modal" 
+              data-bs-target="#cursoModal"
+              data-id="{{ curso.id }}"
+              data-codigo="{{ curso.codigo|default:"" }}"
+              data-nome="{{ curso.nome }}"
+              data-url="{% url 'academico:curso_update' curso.id %}"
+              onclick="abrirModalEditar(this)">
+              <i class="bi bi-pencil" style="font-size: 16px;"></i>
+            </button>
+            <button class="btn btn-link text-secondary p-1 shadow-none" title="Excluir"
+              data-bs-toggle="modal"
+              data-bs-target="#modalExcluir"
+              data-id="{{ curso.id }}"
+              data-nome="{{ curso.nome }}"
+              data-url="{% url 'academico:curso_delete' curso.id %}"
+              onclick="abrirModalExcluir(this)">
+              <i class="bi bi-trash" style="font-size: 16px;"></i>
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="text-center text-muted py-5" style="font-size: 14px;">
+            Nenhum curso cadastrado no sistema.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="cursoModal" tabindex="-1" aria-labelledby="cursoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 532px;">
+    <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
+
+      <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
+        <h5 class="modal-title fw-bold text-dark fs-5" id="cursoModalLabel" style="font-family: system-ui, sans-serif; letter-spacing: -0.5px;">Novo Curso</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form id="formCurso" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body py-1 px-3">
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label for="id_codigo" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Código</label>
+              <input type="text" name="codigo" id="id_codigo" class="form-control border-0 py-2 px-3" 
+                     placeholder="Ex: CC"
+                     style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
+            </div>
+
+            <div class="col-md-6">
+              <label for="id_nome" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Nome <span class="text-danger">*</span></label>
+              <input type="text" name="nome" id="id_nome" class="form-control border-0 py-2 px-3" 
+                     placeholder="Ex: Ciência da Computação"
+                     style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0 pt-4 pb-2 px-3 d-flex gap-3">
+          <button type="button" class="btn btn-light bg-white border flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal" 
+                  style="border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" 
+                  style="background-color: #11346A; border-radius: 8px; height: 44px; font-size: 14px;">
+            Criar registro
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-labelledby="modalExcluirLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+    <div class="modal-content border-0 p-3" style="border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08);">
+      <div class="modal-header border-bottom-0 pt-3 pb-2 px-3">
+        <h5 class="modal-title fw-bold text-dark fs-5" id="modalExcluirLabel" style="font-family: system-ui, sans-serif;">Excluir Curso</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="px-3 py-2" style="font-size: 14px;">
+        <p class="mb-2">Você está prestes a excluir o curso <strong id="nomeExcluir"></strong>.</p>
+        <div class="alert alert-warning py-2 mb-0" style="font-size: 13px;">Esta ação não pode ser desfeita.</div>
+      </div>
+      <form method="post" id="formExcluir" action="">
+        {% csrf_token %}
+        <div class="modal-footer border-top-0 pt-4 pb-2 px-3 d-flex gap-3">
+          <button type="button" class="btn btn-light bg-white border flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal" 
+                  style="border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px;">
+            Cancelar
+          </button>
+          <button type="submit" class="btn text-white flex-grow-1 py-2 fw-bold" 
+                  style="background-color: #C0392B; border-radius: 8px; height: 44px; font-size: 14px;">
+            Confirmar exclusão
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function abrirModalCriar() {
+    const form = document.getElementById('formCurso');
+    const modalTitle = document.getElementById('cursoModalLabel');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    modalTitle.textContent = 'Novo Curso';
+    submitBtn.textContent = 'Criar registro';
+    form.action = "{% url 'academico:curso_create' %}";
+    form.reset();
+  }
+
+  function abrirModalEditar(botao) {
+    const form = document.getElementById('formCurso');
+    const modalTitle = document.getElementById('cursoModalLabel');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    modalTitle.textContent = 'Editar Curso';
+    submitBtn.textContent = 'Salvar alterações';
+    form.action = botao.getAttribute('data-url');
+
+    document.getElementById('id_codigo').value = botao.getAttribute('data-codigo') || '';
+    document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
+  }
+
+  function abrirModalExcluir(botao) {
+    const form = document.getElementById('formExcluir');
+    form.action = botao.getAttribute('data-url');
+    document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
+  }
+</script>
+{% endblock %}
