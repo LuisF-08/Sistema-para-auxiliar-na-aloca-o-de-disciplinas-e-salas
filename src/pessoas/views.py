@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from .models import Turma
@@ -153,6 +154,16 @@ def professor_update(request, pk):
 def professor_delete(request, pk):
     professor = get_object_or_404(Professor, pk=pk)
     if request.method == 'POST':
-        professor.delete()
-        messages.success(request, 'Professor excluído com sucesso!')
-    return redirect('pessoas:professor_list')
+        try:
+            professor.delete()
+            messages.success(request, "Professor excluído com sucesso.")
+            return redirect('professor_list') 
+            
+        except ProtectedError:
+            messages.error(
+                request, 
+                f"Não é possível excluir o(a) professor(a) {professor.nome} pois ele(a) possui alocações ativas."
+            )
+            return redirect('professor_list') 
+
+    return render(request, 'pessoas/professor_confirm_delete.html', {'professor': professor})
