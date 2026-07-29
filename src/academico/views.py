@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from .models import Disciplina, Curso
 from django.contrib import messages
@@ -58,3 +59,49 @@ def disciplina_delete(request, pk):
     
     return render(request, 'academico/disciplina_confirm_delete.html', {'disciplina': disciplina})
 
+def curso_list(request):
+    cursos = Curso.objects.all()
+    return render (request, 'academico/curso_list.html', {'cursos': cursos})
+
+def curso_create(request):
+    if request.method == 'POST':
+        curso_id = request.POST.get('curso_id')
+        nome = request.POST.get('nome')
+        codigo = request.POST.get('codigo')
+        
+        if curso_id:
+            curso = get_object_or_404(Curso, id=curso_id)
+            curso.nome = nome
+            curso.codigo = codigo
+            curso.save()
+            messages.success(request, "Curso atualizado com sucesso!")
+        else:
+            if nome:
+                Curso.objects.create(nome=nome, codigo=codigo)
+                messages.success(request, "Curso cadastrado com sucesso!")
+            else:
+                messages.error(request, "O nome do curso é obrigatório.")
+        
+        return redirect('academico:curso_list')
+
+    cursos = Curso.objects.all()
+    return render(request, 'academico/curso_list.html', {'cursos': cursos})
+
+def curso_update(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
+    if request.method == 'POST':
+        curso.nome = request.POST.get('nome')
+        curso.codigo = request.POST.get('codigo')
+        curso.save()
+        messages.success(request, "Curso atualizado com sucesso!")
+    return redirect('academico:curso_list')
+
+def curso_delete(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
+    if request.method == 'POST':
+        try:
+            curso.delete()
+            messages.success(request, "Curso excluído com sucesso.")
+        except ProtectedError:
+            messages.error(request, "Não é possível excluir este curso pois ele possui disciplinas ou turmas vinculadas.")
+    return redirect('academico:curso_list')
