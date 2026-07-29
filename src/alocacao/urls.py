@@ -10,4 +10,5 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/api/dados/', views.dashboard_data_api, name='dashboard_data_api'),
     path('grade-horaria/', views.grade_horaria_view, name='grade_horaria'),
+    path('api/sugestoes/', views.sugestoes_conflito_api, name='sugestoes_conflito'),
 ]
