@@ -307,7 +307,7 @@ def _qs_grade_filtrada(request):
     periodo = _periodo_ativo()
     qs = (
         Alocacao.objects
-        .filter(status__in=STATUS_ATIVOS)
+        .filter(status__in=STATUS_ATIVOS, horario__isnull=False)
         .select_related("horario", "disciplina", "professor", "turma", "sala")
         .order_by("horario__dia_semana", "horario__horario_inicio")
     )
@@ -431,7 +431,7 @@ def exportar_csv(request):
     return response
 
 
-def _pdf_estilo_tabela(colors):
+def _pdf_estilo_tabela(colors, TableStyle):
     return TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a5f")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -535,7 +535,7 @@ def exportar_pdf(request):
         titulo_doc = "Grade Horária"
 
     tabela = Table(linhas, colWidths=col_widths, repeatRows=1)
-    tabela.setStyle(_pdf_estilo_tabela(colors))
+    tabela.setStyle(_pdf_estilo_tabela(colors, TableStyle))
 
     elementos = [
         Paragraph(titulo_doc, estilo_titulo),
