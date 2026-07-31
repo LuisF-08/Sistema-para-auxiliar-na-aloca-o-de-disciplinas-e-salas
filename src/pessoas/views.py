@@ -2,6 +2,7 @@ from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
+from django.urls import NoReverseMatch
 from .models import Turma
 from .models import Professor
 from academico.models import Curso, PeriodoLetivo
@@ -165,5 +166,6 @@ def professor_delete(request, pk):
                 f"Não é possível excluir o(a) professor(a) {professor.nome} pois ele(a) possui alocações ativas."
             )
             return redirect('professor_list') 
+       
 
     return render(request, 'pessoas/professor_confirm_delete.html', {'professor': professor})
