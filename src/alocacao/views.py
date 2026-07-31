@@ -5,6 +5,7 @@ from academico.models import Curso, Disciplina, PeriodoLetivo
 from pessoas.models import Professor, Turma
 from infraestrutura.models import Sala
 from alocacao.models import Alocacao, Horario 
+from alocacao.services.sugestoes import gerar_sugestoes
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -301,3 +302,56 @@ def grade_horaria_view(request):
     }
 
     return render(request, 'alocacao/grade_horaria.html', context)
+
+
+def sugestoes_conflito_api(request):
+    """
+    API que detecta conflitos em uma alocação candidata e retorna
+    sugestões alternativas (salas livres, horários livres).
+
+    Query params:
+        - professor_id
+        - sala_id
+        - horario_id
+        - turma_id
+        - num_alunos (opcional)
+    """
+    professor_id = request.GET.get('professor_id')
+    sala_id = request.GET.get('sala_id')
+    horario_id = request.GET.get('horario_id')
+    turma_id = request.GET.get('turma_id')
+    num_alunos = request.GET.get('num_alunos', 0)
+
+    # Descobre o periodo_letivo a partir da turma
+    periodo_letivo_id = None
+    if turma_id:
+        try:
+            turma_obj = Turma.objects.select_related('periodo_letivo').get(pk=turma_id)
+            periodo_letivo_id = turma_obj.periodo_letivo_id
+            if not num_alunos:
+                num_alunos = turma_obj.numero_alunos
+        except Turma.DoesNotExist:
+            return JsonResponse({'erro': 'Turma não encontrada'}, status=404)
+
+    if not periodo_letivo_id:
+        return JsonResponse({
+            'conflitos': [],
+            'sugestoes_salas': [],
+            'sugestoes_horarios': [],
+        })
+
+    try:
+        num_alunos = int(num_alunos)
+    except (ValueError, TypeError):
+        num_alunos = 0
+
+    resultado = gerar_sugestoes(
+        periodo_letivo_id=periodo_letivo_id,
+        professor_id=professor_id,
+        sala_id=sala_id,
+        horario_id=horario_id,
+        turma_id=turma_id,
+        num_alunos=num_alunos,
+    )
+
+    return JsonResponse(resultado)

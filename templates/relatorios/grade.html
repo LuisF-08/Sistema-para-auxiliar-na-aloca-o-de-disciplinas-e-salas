@@ -12,6 +12,22 @@
   {% endif %}
 </div>
 
+<!-- Botões de exportação da grade filtrada -->
+{% if turma_selecionada or professor_selecionado %}
+  {% if alocacoes %}
+    <div class="flex gap-3 mb-4">
+      <a href="{% url 'relatorios:exportar_csv' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}"
+         class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+        Exportar CSV
+      </a>
+      <a href="{% url 'relatorios:exportar_pdf' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}"
+         class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+        Exportar PDF
+      </a>
+    </div>
+  {% endif %}
+{% endif %}
+
 <!-- Filtros -->
 <form method="get" class="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-6 flex flex-wrap gap-4 items-end">
   <div class="flex-1 min-w-48">
