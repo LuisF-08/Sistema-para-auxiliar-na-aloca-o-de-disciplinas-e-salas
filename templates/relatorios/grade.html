@@ -3,127 +3,167 @@
 {% block title %}Grade de Horários — SisAloc{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-white">Grade de Horários</h1>
-  {% if periodo %}
-    <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
-  {% else %}
-    <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
-  {% endif %}
-</div>
+<!-- Cabeçalho -->
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Grade de Horários</h1>
+    {% if periodo %}
+      <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
+    {% else %}
+      <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
+    {% endif %}
+  </div>
 
-<!-- Botões de exportação da grade filtrada -->
-{% if turma_selecionada or professor_selecionado %}
-  {% if alocacoes %}
-    <div class="flex gap-3 mb-4">
-      <a href="{% url 'relatorios:exportar_csv' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}"
+  {% if tem_filtro and linhas_grade %}
+    <div class="flex gap-2">
+      <a href="{% url 'relatorios:exportar_csv' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}{% if curso_selecionado %}&curso={{ curso_selecionado.pk }}{% endif %}"
          class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
         Exportar CSV
       </a>
-      <a href="{% url 'relatorios:exportar_pdf' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}"
+      <a href="{% url 'relatorios:exportar_pdf' %}?tipo=grade{% if turma_selecionada %}&turma={{ turma_selecionada.pk }}{% endif %}{% if professor_selecionado %}&professor={{ professor_selecionado.pk }}{% endif %}{% if curso_selecionado %}&curso={{ curso_selecionado.pk }}{% endif %}"
          class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
         Exportar PDF
       </a>
     </div>
   {% endif %}
-{% endif %}
+</div>
 
 <!-- Filtros -->
-<form method="get" class="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-6 flex flex-wrap gap-4 items-end">
-  <div class="flex-1 min-w-48">
-    <label class="block text-xs text-slate-400 mb-1">Filtrar por Turma</label>
-    <select name="turma"
-            class="w-full bg-slate-700 border border-slate-600 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-      <option value="">— Selecione uma turma —</option>
-      {% for t in turmas %}
-        <option value="{{ t.pk }}" {% if turma_selecionada.pk == t.pk %}selected{% endif %}>
-          {{ t.nome }} ({{ t.curso.codigo }})
-        </option>
-      {% endfor %}
-    </select>
+<form method="get" class="bg-slate-800 border border-slate-700 rounded-2xl p-5 mb-6">
+  <div class="flex flex-wrap gap-4 items-end">
+
+    <!-- Filtro por Curso -->
+    <div class="flex-1 min-w-44">
+      <label class="block text-xs text-slate-400 mb-1">Curso</label>
+      <select name="curso"
+              class="w-full bg-slate-700 border border-slate-600 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
+        <option value="todos" {% if not curso_id or curso_id == 'todos' %}selected{% endif %}>Todos os Cursos</option>
+        {% for c in cursos %}
+          <option value="{{ c.pk }}" {% if curso_id == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Filtro por Turma -->
+    <div class="flex-1 min-w-44">
+      <label class="block text-xs text-slate-400 mb-1">Turma</label>
+      <select name="turma"
+              class="w-full bg-slate-700 border border-slate-600 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
+        <option value="">— Selecione —</option>
+        {% for t in turmas %}
+          <option value="{{ t.pk }}" {% if turma_selecionada.pk == t.pk %}selected{% endif %}>
+            {{ t.nome }} ({{ t.curso.codigo }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Filtro por Professor -->
+    <div class="flex-1 min-w-44">
+      <label class="block text-xs text-slate-400 mb-1">Professor</label>
+      <select name="professor"
+              class="w-full bg-slate-700 border border-slate-600 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
+        <option value="">— Selecione —</option>
+        {% for p in professores %}
+          <option value="{{ p.pk }}" {% if professor_selecionado.pk == p.pk %}selected{% endif %}>
+            {{ p.nome }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Botões -->
+    <div class="flex gap-2">
+      <button type="submit"
+              class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2 rounded-xl transition-colors whitespace-nowrap">
+        Gerar Grade
+      </button>
+      {% if tem_filtro %}
+        <a href="{% url 'relatorios:grade' %}"
+           class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold text-sm px-4 py-2 rounded-xl transition-colors whitespace-nowrap">
+          Limpar
+        </a>
+      {% endif %}
+    </div>
   </div>
-
-  <div class="flex-1 min-w-48">
-    <label class="block text-xs text-slate-400 mb-1">Filtrar por Professor</label>
-    <select name="professor"
-            class="w-full bg-slate-700 border border-slate-600 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-blue-500">
-      <option value="">— Selecione um professor —</option>
-      {% for p in professores %}
-        <option value="{{ p.pk }}" {% if professor_selecionado.pk == p.pk %}selected{% endif %}>
-          {{ p.nome }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
-
-  <button type="submit"
-          class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2 rounded-xl transition-colors">
-    Filtrar
-  </button>
-
-  {% if turma_selecionada or professor_selecionado %}
-    <a href="{% url 'relatorios:grade' %}"
-       class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold text-sm px-5 py-2 rounded-xl transition-colors">
-      Limpar
-    </a>
-  {% endif %}
 </form>
 
-<!-- Resultado -->
-{% if turma_selecionada or professor_selecionado %}
-  {% if alocacoes %}
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-700">
-        {% if turma_selecionada %}
-          <p class="text-sm text-white font-semibold">Turma: {{ turma_selecionada.nome }}</p>
-        {% else %}
-          <p class="text-sm text-white font-semibold">Professor: {{ professor_selecionado.nome }}</p>
-        {% endif %}
-        <p class="text-xs text-slate-400 mt-0.5">{{ alocacoes|length }} alocação{{ alocacoes|length|pluralize:"ões" }} encontrada{{ alocacoes|length|pluralize:"s" }}</p>
-      </div>
-      <table class="w-full text-sm">
-        <thead class="border-b border-slate-700">
-          <tr>
-            <th class="text-left text-xs text-slate-400 px-6 py-3">Dia</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Horário</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Disciplina</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Professor</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Turma</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Sala</th>
-            <th class="text-left text-xs text-slate-400 px-4 py-3">Status</th>
+<!-- Grade visual -->
+{% if tem_filtro %}
+  {% if linhas_grade %}
+    <!-- Rótulo do filtro ativo -->
+    <div class="flex items-center gap-3 mb-3">
+      {% if turma_selecionada %}
+        <span class="text-sm text-slate-300 font-semibold">Turma: {{ turma_selecionada.nome }}</span>
+      {% elif professor_selecionado %}
+        <span class="text-sm text-slate-300 font-semibold">Professor: {{ professor_selecionado.nome }}</span>
+      {% elif curso_selecionado %}
+        <span class="text-sm text-slate-300 font-semibold">Curso: {{ curso_selecionado.nome }}</span>
+      {% endif %}
+      <span class="text-xs text-slate-500">{{ linhas_grade|length }} horário{{ linhas_grade|length|pluralize:"s" }}</span>
+    </div>
+
+    <!-- Legenda -->
+    <div class="flex gap-5 mb-3 text-xs text-slate-400 font-medium">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-sm bg-blue-500/30 border border-blue-500/50 inline-block"></span> Normal
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-sm bg-red-500/30 border border-red-500/50 inline-block"></span> Conflito
+      </span>
+    </div>
+
+    <!-- Tabela da grade -->
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-auto">
+      <table class="w-full text-sm border-collapse" style="min-width: 700px;">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="text-left text-xs text-slate-500 font-semibold uppercase px-4 py-3 w-20 bg-slate-900/50">Horário</th>
+            {% for di in dias_info %}
+              <th class="text-center text-xs text-slate-300 font-semibold uppercase px-2 py-3 bg-slate-900/50">
+                {{ di.abrev }}
+              </th>
+            {% endfor %}
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-700/50">
-          {% for a in alocacoes %}
-            <tr class="hover:bg-slate-700/30 transition-colors">
-              <td class="px-6 py-4 text-slate-300">{{ a.dia_nome }}</td>
-              <td class="px-4 py-4 font-mono text-slate-300 text-xs whitespace-nowrap">
-                {{ a.horario.horario_inicio|time:"H:i" }} – {{ a.horario.horario_fim|time:"H:i" }}
-              </td>
-              <td class="px-4 py-4 text-white font-medium">{{ a.disciplina.nome }}</td>
-              <td class="px-4 py-4 text-slate-300">{{ a.professor.nome }}</td>
-              <td class="px-4 py-4 text-slate-300">{{ a.turma.nome }}</td>
-              <td class="px-4 py-4 text-slate-300">{{ a.sala.nome }}</td>
-              <td class="px-4 py-4">
-                {% if a.status == "confirmada" %}
-                  <span class="bg-emerald-500/15 text-emerald-400 text-xs px-2 py-1 rounded capitalize">{{ a.status }}</span>
-                {% else %}
-                  <span class="bg-blue-500/15 text-blue-400 text-xs px-2 py-1 rounded capitalize">{{ a.status }}</span>
-                {% endif %}
-              </td>
+        <tbody class="divide-y divide-slate-700/40">
+          {% for linha in linhas_grade %}
+            <tr class="hover:bg-slate-700/20 transition-colors">
+              <td class="px-4 py-3 font-mono text-slate-400 text-xs align-top whitespace-nowrap">{{ linha.hora }}</td>
+              {% for celula in linha.celulas %}
+                <td class="px-2 py-2 align-top">
+                  {% for a in celula.alocacoes %}
+                    <div class="p-2 rounded-lg mb-1 text-left
+                      {% if a.status == 'confirmada' %}
+                        bg-blue-500/15 border border-blue-500/30
+                      {% else %}
+                        bg-slate-700/60 border border-slate-600/40
+                      {% endif %}">
+                      <p class="font-semibold text-white text-xs truncate leading-tight">{{ a.disciplina.nome }}</p>
+                      <p class="text-slate-400 text-xs truncate">{{ a.professor.nome }}</p>
+                      <p class="text-slate-500 text-xs truncate">{{ a.sala.nome }} · {{ a.turma.nome }}</p>
+                    </div>
+                  {% empty %}
+                    <span class="text-slate-700 text-xs">—</span>
+                  {% endfor %}
+                </td>
+              {% endfor %}
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
   {% else %}
     <div class="bg-slate-800 border border-slate-700 rounded-2xl p-10 text-center">
       <p class="text-slate-400 text-lg">Nenhuma alocação ativa encontrada para o filtro selecionado.</p>
     </div>
   {% endif %}
+
 {% else %}
   <div class="bg-slate-800 border border-slate-700 rounded-2xl p-10 text-center">
-    <p class="text-slate-400 text-lg">Selecione uma turma ou professor para visualizar a grade.</p>
+    <p class="text-slate-400 text-lg">Selecione um curso, turma ou professor para visualizar a grade.</p>
+    <p class="text-slate-500 text-sm mt-2">Use os filtros acima e clique em <span class="text-blue-400 font-medium">Gerar Grade</span>.</p>
   </div>
 {% endif %}
 {% endblock %}
