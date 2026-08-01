@@ -1,0 +1,147 @@
+/* static/css/custom.css */
+
+:root {
+  --sidebar-width: 260px;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #3b82f6;
+  --topbar-height: 60px;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #f1f5f9;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--sidebar-bg);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 18px;
+  border-bottom: 1px solid #334155;
+}
+
+.sidebar-brand-icon {
+  font-size: 1.6rem;
+}
+
+.sidebar-brand-text strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.sidebar-brand-text span {
+  font-size: 0.75rem;
+  color: var(--sidebar-text);
+}
+
+.sidebar-section-label {
+  padding: 16px 18px 6px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+}
+
+.sidebar .nav-link:hover {
+  background-color: #334155;
+  color: white;
+}
+
+.sidebar .nav-link.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-right: 3px solid var(--sidebar-active);
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 18px;
+  border-top: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.sidebar-user strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.sidebar-user span {
+  font-size: 0.75rem;
+  color: var(--sidebar-text);
+}
+
+/* ========== CONTEÚDO PRINCIPAL ========== */
+.main-with-sidebar {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+.topbar {
+  height: var(--topbar-height);
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.breadcrumb-text {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* ========== UTILITÁRIOS ========== */
+.cursor-pointer {
+  cursor: pointer;
+}
