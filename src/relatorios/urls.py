@@ -4,6 +4,7 @@ from . import views
 app_name = "relatorios"
 
 urlpatterns = [
+    path("", views.DashboardView.as_view(), name="dashboard"),
     path("professores/", views.RelatorioProfessoresView.as_view(), name="professores"),
     path("salas/", views.RelatorioSalasView.as_view(), name="salas"),
     path("grade/", views.RelatorioGradeView.as_view(), name="grade"),

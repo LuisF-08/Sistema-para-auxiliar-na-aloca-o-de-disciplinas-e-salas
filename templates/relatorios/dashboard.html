@@ -1,0 +1,176 @@
+{% extends "base_relatorios.html" %}
+
+{% block title %}Dashboard — SisAloc{% endblock %}
+
+{% block relatorios_content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-white">Dashboard Administrativo</h1>
+    {% if periodo %}
+      <p class="text-sm text-slate-400 mt-1">Período letivo: {{ periodo }}</p>
+    {% else %}
+      <p class="text-sm text-amber-400 mt-1">Nenhum período letivo ativo encontrado.</p>
+    {% endif %}
+  </div>
+  <div class="flex gap-3">
+    <a href="{% url 'relatorios:exportar_csv' %}"
+       class="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+      Exportar CSV
+    </a>
+    <a href="{% url 'relatorios:exportar_pdf' %}"
+       class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+      Exportar PDF
+    </a>
+  </div>
+</div>
+
+<!-- Cards de métricas -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+  <!-- Total de alocações -->
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+    <p class="text-3xl font-bold text-white font-mono">{{ total_alocacoes }}</p>
+    <p class="text-sm text-slate-400 mt-1">Alocações Ativas</p>
+    <p class="text-xs text-blue-400 mt-2">planejadas + confirmadas</p>
+  </div>
+
+  <!-- Taxa de ocupação -->
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+    <p class="text-3xl font-bold text-emerald-300 font-mono">
+      {{ taxa_ocupacao }}<span class="text-lg text-emerald-500">%</span>
+    </p>
+    <p class="text-sm text-slate-400 mt-1">Ocupação de Salas</p>
+    <div class="mt-2 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+      <div class="h-full bg-emerald-500 rounded-full" style="width: {{ taxa_ocupacao }}%"></div>
+    </div>
+    <p class="text-xs text-slate-500 mt-1">{{ salas_ocupadas }} de {{ total_salas }} salas</p>
+  </div>
+
+  <!-- Conflitos -->
+  <div class="bg-slate-800 rounded-2xl p-5
+    {% if total_conflitos > 0 %}border border-red-500/50 shadow-red-900/20 shadow-lg{% else %}border border-slate-700{% endif %}">
+    <p class="text-3xl font-bold font-mono
+      {% if total_conflitos > 0 %}text-red-400{% else %}text-slate-300{% endif %}">
+      {{ total_conflitos }}
+    </p>
+    <p class="text-sm text-slate-400 mt-1">Conflitos Ativos</p>
+    <p class="text-xs mt-2
+      {% if total_conflitos > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+      {% if total_conflitos > 0 %}Requer atenção imediata{% else %}Nenhum conflito detectado{% endif %}
+    </p>
+  </div>
+
+  <!-- Assentos ociosos -->
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+    <p class="text-3xl font-bold text-amber-300 font-mono">{{ media_ociosos }}</p>
+    <p class="text-sm text-slate-400 mt-1">Média Assentos Ociosos</p>
+    <p class="text-xs text-amber-500 mt-2">por sala alocada</p>
+  </div>
+
+</div>
+
+<!-- Alertas de conflito -->
+<section class="mb-10">
+  <div class="flex items-center gap-3 mb-5">
+    <h2 class="text-lg font-semibold text-white">Alertas de Conflito</h2>
+    {% if total_conflitos > 0 %}
+      <span class="bg-red-500/15 text-red-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-500/25">
+        {{ total_conflitos }} ativo{{ total_conflitos|pluralize:"s" }}
+      </span>
+    {% else %}
+      <span class="bg-emerald-500/15 text-emerald-400 text-xs font-bold px-2.5 py-0.5 rounded-full">
+        Sistema limpo
+      </span>
+    {% endif %}
+  </div>
+
+  {% if conflitos_sala or conflitos_professor %}
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="border-b border-slate-700">
+          <tr>
+            <th class="text-left text-xs text-slate-400 px-6 py-3">Tipo</th>
+            <th class="text-left text-xs text-slate-400 px-4 py-3">Entidade</th>
+            <th class="text-left text-xs text-slate-400 px-4 py-3">Horário</th>
+            <th class="text-left text-xs text-slate-400 px-4 py-3">Envolvidos</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/50">
+          {% for c in conflitos_sala %}
+            <tr class="hover:bg-slate-700/30 transition-colors">
+              <td class="px-6 py-4">
+                <span class="bg-red-500/15 text-red-400 text-xs font-medium px-2 py-1 rounded">Sala Dupla</span>
+              </td>
+              <td class="px-4 py-4 text-white font-medium">{{ c.sala }}</td>
+              <td class="px-4 py-4 font-mono text-red-300 text-xs">{{ c.horario }}</td>
+              <td class="px-4 py-4">
+                {% for e in c.envolvidos %}
+                  <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0"></span>{{ e }}
+                  </p>
+                {% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+          {% for c in conflitos_professor %}
+            <tr class="hover:bg-slate-700/30 transition-colors">
+              <td class="px-6 py-4">
+                <span class="bg-orange-500/15 text-orange-400 text-xs font-medium px-2 py-1 rounded">Prof. Duplo</span>
+              </td>
+              <td class="px-4 py-4 text-white font-medium">{{ c.professor }}</td>
+              <td class="px-4 py-4 font-mono text-orange-300 text-xs">{{ c.horario }}</td>
+              <td class="px-4 py-4">
+                {% for e in c.envolvidos %}
+                  <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0"></span>{{ e }}
+                  </p>
+                {% endfor %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-10 text-center">
+      <p class="text-emerald-300 font-semibold text-lg">Nenhum conflito detectado</p>
+      <p class="text-emerald-500 text-sm mt-1">Todas as alocações estão consistentes.</p>
+    </div>
+  {% endif %}
+</section>
+
+<!-- Horários de pico -->
+{% if horarios_pico %}
+<section>
+  <h2 class="text-lg font-semibold text-white mb-4">Horários de Pico</h2>
+  <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="border-b border-slate-700">
+        <tr>
+          <th class="text-left text-xs text-slate-400 px-6 py-3">#</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Dia</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Horário</th>
+          <th class="text-left text-xs text-slate-400 px-4 py-3">Alocações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-700/50">
+        {% for h in horarios_pico %}
+          <tr class="hover:bg-slate-700/30 transition-colors">
+            <td class="px-6 py-3 text-slate-500 text-xs font-mono">{{ forloop.counter }}</td>
+            <td class="px-4 py-3 text-white">{{ h.dia_nome }}</td>
+            <td class="px-4 py-3 font-mono text-slate-300 text-xs">
+              {{ h.horario_inicio|time:"H:i" }} – {{ h.horario_fim|time:"H:i" }}
+            </td>
+            <td class="px-4 py-3">
+              <span class="bg-blue-500/15 text-blue-300 text-xs font-bold px-2.5 py-1 rounded-full">
+                {{ h.total_alocacoes }}
+              </span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
