@@ -2,13 +2,15 @@ import csv
 import io
 from datetime import datetime
 
+from collections import defaultdict
+
 from django.db.models import Count, Sum, F, FloatField, ExpressionWrapper, Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views import View
 
 from alocacao.models import Alocacao, Horario
-from academico.models import PeriodoLetivo
+from academico.models import Curso, PeriodoLetivo
 from infraestrutura.models import Sala
 from pessoas.models import Professor, Turma
 
@@ -231,16 +233,23 @@ class RelatorioSalasView(View):
 
 
 class RelatorioGradeView(View):
+    DIAS = [1, 2, 3, 4, 5, 6]
+
     def get(self, request):
         periodo = _periodo_ativo()
         turma_id = request.GET.get("turma")
         professor_id = request.GET.get("professor")
+        curso_id = request.GET.get("curso", "todos")
 
         turmas = Turma.objects.filter(ativo=True).select_related("curso", "periodo_letivo").order_by("nome")
         professores = Professor.objects.filter(ativo=True).order_by("nome")
+        cursos = Curso.objects.all().order_by("nome")
 
         turma_selecionada = None
         professor_selecionado = None
+        curso_selecionado = None
+
+        tem_filtro = bool(turma_id or professor_id or (curso_id and curso_id != "todos"))
 
         qs = Alocacao.objects.filter(status__in=STATUS_ATIVOS)
         if periodo:
@@ -258,23 +267,38 @@ class RelatorioGradeView(View):
                 qs = qs.filter(professor=professor_selecionado)
             except Professor.DoesNotExist:
                 qs = qs.none()
-        else:
-            qs = qs.none()
+        elif curso_id and curso_id != "todos":
+            try:
+                curso_selecionado = Curso.objects.get(pk=curso_id)
+                qs = qs.filter(disciplina__curso=curso_selecionado)
+            except Curso.DoesNotExist:
+                qs = qs.none()
 
-        alocacoes = list(
-            qs.select_related("horario", "disciplina", "professor", "turma", "sala")
-            .order_by("horario__dia_semana", "horario__horario_inicio")
-        )
-        for a in alocacoes:
-            a.dia_nome = DIAS_SEMANA.get(a.horario.dia_semana, "")
+        if not tem_filtro:
+            linhas_grade = []
+        else:
+            alocacoes = list(
+                qs.select_related("horario", "disciplina", "professor", "turma", "sala")
+            )
+            linhas_grade = _build_grade_matrix(alocacoes, self.DIAS)
+
+        dias_info = [
+            {"num": d, "nome": DIAS_SEMANA[d], "abrev": DIAS_SEMANA_ABREV[d]}
+            for d in self.DIAS
+        ]
 
         ctx = {
             "periodo": periodo,
             "turmas": turmas,
             "professores": professores,
+            "cursos": cursos,
             "turma_selecionada": turma_selecionada,
             "professor_selecionado": professor_selecionado,
-            "alocacoes": alocacoes,
+            "curso_selecionado": curso_selecionado,
+            "curso_id": curso_id,
+            "dias_info": dias_info,
+            "linhas_grade": linhas_grade,
+            "tem_filtro": tem_filtro,
         }
         return render(request, "relatorios/grade.html", ctx)
 
@@ -283,7 +307,7 @@ def _qs_grade_filtrada(request):
     periodo = _periodo_ativo()
     qs = (
         Alocacao.objects
-        .filter(status__in=STATUS_ATIVOS)
+        .filter(status__in=STATUS_ATIVOS, horario__isnull=False)
         .select_related("horario", "disciplina", "professor", "turma", "sala")
         .order_by("horario__dia_semana", "horario__horario_inicio")
     )
@@ -291,11 +315,29 @@ def _qs_grade_filtrada(request):
         qs = qs.filter(periodo_letivo=periodo)
     turma_id = request.GET.get("turma")
     professor_id = request.GET.get("professor")
+    curso_id = request.GET.get("curso")
     if turma_id:
         qs = qs.filter(turma_id=turma_id)
     elif professor_id:
         qs = qs.filter(professor_id=professor_id)
+    elif curso_id and curso_id != "todos":
+        qs = qs.filter(disciplina__curso_id=curso_id)
     return qs
+
+
+def _build_grade_matrix(alocacoes, dias):
+    """Monta a estrutura {slot_hora: {dia_int: [alocacoes]}} para a grade visual."""
+    matriz = defaultdict(lambda: defaultdict(list))
+    for a in alocacoes:
+        if a.horario:
+            slot = a.horario.horario_inicio.strftime("%H:%M")
+            matriz[slot][a.horario.dia_semana].append(a)
+    slots = sorted(matriz.keys())
+    linhas = [
+        {"hora": slot, "celulas": [{"dia": d, "alocacoes": matriz[slot][d]} for d in dias]}
+        for slot in slots
+    ]
+    return linhas
 
 
 def _qs_professores():
@@ -389,7 +431,7 @@ def exportar_csv(request):
     return response
 
 
-def _pdf_estilo_tabela(colors):
+def _pdf_estilo_tabela(colors, TableStyle):
     return TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a5f")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -493,7 +535,7 @@ def exportar_pdf(request):
         titulo_doc = "Grade Horária"
 
     tabela = Table(linhas, colWidths=col_widths, repeatRows=1)
-    tabela.setStyle(_pdf_estilo_tabela(colors))
+    tabela.setStyle(_pdf_estilo_tabela(colors, TableStyle))
 
     elementos = [
         Paragraph(titulo_doc, estilo_titulo),
