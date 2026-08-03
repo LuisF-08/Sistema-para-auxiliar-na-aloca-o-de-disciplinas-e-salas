@@ -18,21 +18,21 @@ from pessoas.models import Professor, Turma
 STATUS_ATIVOS = ["planejada", "confirmada"]
 
 DIAS_SEMANA = {
-    1: "Segunda-feira",
-    2: "Terça-feira",
-    3: "Quarta-feira",
-    4: "Quinta-feira",
-    5: "Sexta-feira",
-    6: "Sábado",
+    "1": "Segunda-feira",
+    "2": "Terça-feira",
+    "3": "Quarta-feira",
+    "4": "Quinta-feira",
+    "5": "Sexta-feira",
+    "6": "Sábado",
 }
 
 DIAS_SEMANA_ABREV = {
-    1: "Seg",
-    2: "Ter",
-    3: "Qua",
-    4: "Qui",
-    5: "Sex",
-    6: "Sáb",
+    "1": "Seg",
+    "2": "Ter",
+    "3": "Qua",
+    "4": "Qui",
+    "5": "Sex",
+    "6": "Sáb",
 }
 
 
@@ -233,7 +233,7 @@ class RelatorioSalasView(View):
 
 
 class RelatorioGradeView(View):
-    DIAS = [1, 2, 3, 4, 5, 6]
+    DIAS = ["1", "2", "3", "4", "5", "6"]
 
     def get(self, request):
         periodo = _periodo_ativo()
@@ -326,7 +326,7 @@ def _qs_grade_filtrada(request):
 
 
 def _build_grade_matrix(alocacoes, dias):
-    """Monta a estrutura {slot_hora: {dia_int: [alocacoes]}} para a grade visual."""
+    """Monta a estrutura {slot_hora: {dia_str: [alocacoes]}} para a grade visual."""
     matriz = defaultdict(lambda: defaultdict(list))
     for a in alocacoes:
         if a.horario:
