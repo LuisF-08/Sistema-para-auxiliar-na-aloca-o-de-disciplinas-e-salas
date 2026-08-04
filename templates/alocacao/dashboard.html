@@ -2,6 +2,10 @@
 
 {% block title %}SADAS - Dashboard{% endblock %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/listas.css' %}">
+{% endblock %}
+
 {% block content %}
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
@@ -90,64 +94,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
-<script>
-  function inicializarGraficos(rawResponse) {
-      // 1. Converte a resposta texto do HTMX com segurança para JSON do JS
-      const dados = JSON.parse(rawResponse);
-
-      // 2. Popula os cards com os números reais
-      document.getElementById('kpi-total').innerText = dados.total_alocacoes;
-      document.getElementById('kpi-conflitos').innerText = dados.conflitos_pendentes;
-      document.getElementById('kpi-ocupacao').innerText = dados.taxa_ocupacao + '%';
-      document.getElementById('kpi-professores').innerText = dados.professores_sem_alocacao;
-      
-      document.getElementById('legend-alocadas').innerText = dados.salas_alocadas;
-      document.getElementById('legend-livres').innerText = dados.salas_livres;
-      document.getElementById('legend-manutencao').innerText = dados.salas_manutencao;
-
-      // 3. Renderiza o Gráfico de Barras
-      const ctxOcupacao = document.getElementById('chartOcupacao').getContext('2d');
-      new Chart(ctxOcupacao, {
-          type: 'bar',
-          data: {
-              labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'],
-              datasets: [{
-                  data: dados.dados_ocupacao_dias,
-                  backgroundColor: '#2563EB',
-                  borderRadius: 4,
-                  barThickness: 24,
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } },
-              scales: {
-                  y: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
-                  x: { grid: { display: false } }
-              }
-          }
-      });
-
-      // 4. Renderiza o Gráfico de Rosca
-      const ctxStatus = document.getElementById('chartStatusSalas').getContext('2d');
-      new Chart(ctxStatus, {
-          type: 'doughnut',
-          data: {
-              datasets: [{
-                  data: [dados.salas_alocadas, dados.salas_livres, dados.salas_manutencao],
-                  backgroundColor: ['#2563EB', '#E2E8F0', '#D97706'],
-                  borderWidth: 0,
-                  cutout: '75%'
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: { legend: { display: false } }
-          }
-      });
-  }
-</script>
+{% block extra_js %}
+  <script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,21 @@
+.page-title { font-size: 28px; font-family: system-ui, sans-serif; }
+.page-subtitle { color: #5A6882 !important; }
+.page-action-btn { background-color: #11346A; border-radius: 8px; height: 40px; font-size: 14px; }
+.page-search-input { background-color: #F0F2F5; border-radius: 8px; height: 44px; font-size: 14px; }
+.page-list-card { border-radius: 12px; background: #ffffff; }
+.page-table { font-family: system-ui, sans-serif; }
+.page-table thead { background-color: #ffffff; }
+.page-table thead tr { font-size: 12px; border-bottom: 1px solid #E9ECEF; }
+.page-table tbody tr { border-bottom: 1px solid #F1F3F5; font-size: 14px; }
+.page-table th { letter-spacing: 0.5px; }
+.page-table td { vertical-align: middle; }
+.page-badge { background-color: #E6F0FF; color: #0052CC; border-radius: 20px; font-size: 12px; letter-spacing: -0.2px; }
+.page-modal-shell { border-radius: 16px; box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.08); }
+.page-modal-form-control, .page-modal-select { background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px; }
+.page-modal-label { font-size: 13px; }
+.page-modal-cancel { border-color: #DDE2E5 !important; border-radius: 8px; height: 44px; color: #4F5E74; font-size: 14px; }
+.page-modal-submit { background-color: #11346A; border-radius: 8px; height: 44px; font-size: 14px; }
+.page-modal-delete { background-color: #C0392B; border-radius: 8px; height: 44px; font-size: 14px; }
+.page-icon-btn { font-size: 16px; }
+.page-empty-state { font-size: 14px; }
+.page-delete-alert { font-size: 13px; }
