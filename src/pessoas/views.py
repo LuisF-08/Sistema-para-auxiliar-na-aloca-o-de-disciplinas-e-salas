@@ -1,5 +1,5 @@
 from django.db import IntegrityError
-from django.db.models import ProtectedError
+from django.db.models import Count, ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.urls import NoReverseMatch
@@ -96,7 +96,7 @@ def turma_delete(request, pk):
     return redirect('pessoas:turma_list')  
 
 def professor_list(request):
-    professores = Professor.objects.all()
+    professores = Professor.objects.annotate(alocacoes_count=Count('alocacoes'))
     return render(request, 'pessoas/professor_list.html', {'professores': professores})
 
 

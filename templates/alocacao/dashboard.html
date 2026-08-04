@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}SADAS - Dashboard{% endblock %}
 
@@ -7,8 +8,6 @@
 {% endblock %}
 
 {% block content %}
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h2 class="fw-bold text-dark m-0" style="font-size: 28px; font-family: system-ui, sans-serif; color: #0F102E !important;">Dashboard</h2>
@@ -20,39 +19,35 @@
   </a>
 </div>
 
-<div hx-get="{% url 'alocacao:dashboard_data_api' %}" 
-  hx-trigger="load" 
-  hx-swap="none" 
-  hx-on::after-request="inicializarGraficos(event.detail.xhr.responseText)">
-    
+<div id="dashboardMetrics" data-api-url="{% url 'alocacao:dashboard_data_api' %}">
 
 <div class="row g-4 mb-4">
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
       <h6 class="text-secondary small fw-bold text-uppercase mb-1">Total de Alocações</h6>
       <h2 class="fw-bold my-1 text-dark" id="kpi-total"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
-      <span class="text-success small fw-semibold">+12 esta semana</span>
+      <span class="text-success small fw-semibold" id="kpi-total-note">Carregando...</span>
     </div>
   </div>
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px; background-color: #FFF5F5;">
       <h6 class="text-secondary small fw-bold text-uppercase mb-1">Conflitos Pendentes</h6>
       <h2 class="fw-bold my-1 text-danger" id="kpi-conflitos"><span class="spinner-border spinner-border-sm text-danger"></span></h2>
-      <span class="text-muted small">2 críticos, 1 aviso</span>
+      <span class="text-muted small" id="kpi-conflitos-note">Carregando...</span>
     </div>
   </div>
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
       <h6 class="text-secondary small fw-bold text-uppercase mb-1">Ocupação das Salas</h6>
       <h2 class="fw-bold my-1 text-dark" id="kpi-ocupacao"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
-      <span class="text-muted small">38 de 49 salas</span>
+      <span class="text-muted small" id="kpi-ocupacao-note">Carregando...</span>
     </div>
   </div>
   <div class="col-12 col-md-6 col-lg-3">
     <div class="card border-0 shadow-sm p-3 position-relative" style="border-radius: 12px; min-height: 120px;">
       <h6 class="text-secondary small fw-bold text-uppercase mb-1">Prof. sem Alocação</h6>
       <h2 class="fw-bold my-1 text-dark" id="kpi-professores"><span class="spinner-border spinner-border-sm text-secondary"></span></h2>
-      <span class="text-muted small">de 68 professores</span>
+      <span class="text-muted small" id="kpi-professores-note">Carregando...</span>
     </div>
   </div>
 </div>
@@ -71,7 +66,7 @@
   <div class="col-12 col-lg-4">
     <div class="card border-0 shadow-sm p-4" style="border-radius: 12px; min-height: 380px;">
       <h6 class="fw-bold text-dark m-0">Status das Salas</h6>
-      <small class="text-muted mb-3 d-block">49 salas totais</small>
+      <small class="text-muted mb-3 d-block" id="status-salas-note">Carregando...</small>
       <div style="height: 200px; position: relative;">
         <canvas id="chartStatusSalas"></canvas>
       </div>
@@ -91,6 +86,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

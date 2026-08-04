@@ -35,6 +35,14 @@ function abrirModalEditar(botao) {
 
 function abrirModalExcluir(botao) {
   const form = document.getElementById('formExcluir');
+  const alocacoes = parseInt(botao.getAttribute('data-alocacoes') || '0', 10);
   form.action = botao.getAttribute('data-url');
   document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
+
+  const detalheExcluir = document.getElementById('detalheExcluir');
+  if (alocacoes > 0) {
+    detalheExcluir.textContent = `Este professor possui ${alocacoes} alocação(ões) no sistema. A exclusão também removerá essas alocações relacionadas.`;
+  } else {
+    detalheExcluir.textContent = 'Esta ação não pode ser desfeita.';
+  }
 }
