@@ -66,6 +66,9 @@ def alocacao_create(request):
     }
 
     if request.method == 'POST':
+        for _ in messages.get_messages(request):
+            pass
+
         disciplina_id = request.POST.get('disciplina')
         turma_id = request.POST.get('turma')
         professor_id = request.POST.get('professor')

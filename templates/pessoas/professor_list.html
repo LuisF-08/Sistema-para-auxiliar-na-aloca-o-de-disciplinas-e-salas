@@ -121,7 +121,7 @@
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form id="formProfessor" method="post" action="">
+      <form id="formProfessor" method="post" action="{% url 'pessoas:professor_create' %}" data-create-url="{% url 'pessoas:professor_create' %}">
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
