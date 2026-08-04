@@ -2,6 +2,7 @@ from datetime import date, time
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
 from alocacao.models import Alocacao, Horario
 from academico.models import Curso, Disciplina, PeriodoLetivo
@@ -12,6 +13,15 @@ from alocacao.repositories.horarios import horarios_livres_para_turma
 from alocacao.repositories.salas import salas_livres
 from alocacao.services.alocacoes import cancelar_alocacao, criar_alocacao
 from alocacao.services.conflitos import mapear_conflitos
+
+
+class AlocacaoViewTest(TestCase):
+    def test_mensagem_de_erro_aparece_quando_a_alocacao_nao_pode_ser_criada(self):
+        response = self.client.post(reverse('alocacao:alocacao_create'), data={})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Erro ao criar alocação!')
+        self.assertContains(response, 'alert-danger')
 
 
 class AlocacaoModelTest(TestCase):

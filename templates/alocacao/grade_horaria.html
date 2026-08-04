@@ -3,6 +3,16 @@
 {% block content %}
 <div class="container-fluid p-4">
 
+    {% if messages %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert {% if 'error' in message.tags or 'danger' in message.tags %}alert-danger{% else %}alert-success{% endif %} py-2" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark mb-1" style="font-size: 24px;">Grade Horária</h2>
