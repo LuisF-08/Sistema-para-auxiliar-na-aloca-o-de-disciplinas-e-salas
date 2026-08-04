@@ -51,19 +51,16 @@
           <i class="bi bi-building"></i> Salas
         </a>
         <a href="{% url 'pessoas:turma_list' %}" class="nav-link {% if request.resolver_match.url_name == 'turma_list' %}active{% endif %}">
-  <i class="bi bi-mortarboard"></i> Turmas
-          <a href="{% url 'academico:curso_list' %}" class="nav-link text-white">
-    <i class="bi bi-journal-bookmark-fill me-2"></i> Cursos
-          </a
-      </a>
-      <a href="{% url 'academico:periodo_list' %}" class="nav-link {% if request.resolver_match.url_name == 'periodo_list' %}active{% endif %}">
-        <i class="bi bi-calendar2-range"></i> Períodos Letivos
-      </a>
-      <a href="{% url 'alocacao:horario_list' %}" class="nav-link {% if request.resolver_match.url_name == 'horario_list' %}active{% endif %}">
-        <i class="bi bi-clock"></i> Horários
-      </a>
-        <a href="{% url 'academico:curso_list' %}" class="nav-link">
+          <i class="bi bi-mortarboard"></i> Turmas
+        </a>
+        <a href="{% url 'academico:curso_list' %}" class="nav-link {% if request.resolver_match.url_name == 'curso_list' %}active{% endif %}">
           <i class="bi bi-journal-bookmark-fill me-2"></i> Cursos
+        </a>
+        <a href="{% url 'academico:periodo_list' %}" class="nav-link {% if request.resolver_match.url_name == 'periodo_list' %}active{% endif %}">
+          <i class="bi bi-calendar2-range"></i> Períodos Letivos
+        </a>
+        <a href="{% url 'alocacao:horario_list' %}" class="nav-link {% if request.resolver_match.url_name == 'horario_list' %}active{% endif %}">
+          <i class="bi bi-clock"></i> Horários
         </a>
       </nav>
 

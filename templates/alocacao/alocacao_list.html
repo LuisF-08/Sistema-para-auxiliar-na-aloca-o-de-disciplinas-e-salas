@@ -75,6 +75,7 @@
             {% for professor in professores %}
             <div class="prof-item d-flex justify-content-between align-items-center p-3 border rounded-3"
               style="cursor: pointer; border-color: #E2E8F0 !important;"
+              data-prof-id="{{ professor.id }}"
               onclick="selecionarProf(this, '{{ professor.id }}', '{{ professor.nome }}')">
               <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
@@ -493,7 +494,8 @@ function verificarDisponibilidade() {
 
     fetch(`/api/alocacoes/?dia_semana=${encodeURIComponent(dia)}&horario=${horarioId}`)
       .then(res => res.json())
-      .then(alocacoes => {
+      .then(data => {
+        const alocacoes = Array.isArray(data) ? data : (data.results || []);
         const professoresOcupados = alocacoes.map(a => typeof a.professor === 'object' ? a.professor.id : a.professor);
         const salasOcupadas = alocacoes.map(a => typeof a.sala === 'object' ? a.sala.id : a.sala);
 

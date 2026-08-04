@@ -6,8 +6,12 @@ from .models import Disciplina, Curso, PeriodoLetivo
 from django.contrib import messages
 
 def disciplina_list(request):
-    disciplinas = Disciplina.objects.all()
-    return render(request, 'academico/disciplina_list.html', {'disciplinas': disciplinas})
+    disciplinas = Disciplina.objects.select_related('curso').all()
+    cursos = Curso.objects.all()
+    return render(request, 'academico/disciplina_list.html', {
+        'disciplinas': disciplinas,
+        'cursos': cursos,
+    })
 
 
 def disciplina_create(request):
@@ -15,18 +19,18 @@ def disciplina_create(request):
         nome = request.POST.get('nome')
         codigo = request.POST.get('codigo')
         carga_horaria = request.POST.get('carga_horaria_semanal')
-        periodo_rec = request.POST.get('periodo_recomendado')
+        periodo_rec = request.POST.get('periodo')
         curso_id = request.POST.get('curso')
         
         if not curso_id:
             messages.error(request, 'É necessário selecionar um Curso para cadastrar a disciplina.')
-            return redirect('/academico/disciplinas/')
+            return redirect('academico:disciplina_list')
 
         curso_instancia = Curso.objects.filter(id=curso_id).first()
         
         if not curso_instancia:
             messages.error(request, 'O curso selecionado não existe.')
-            return redirect('/academico/disciplinas/')
+            return redirect('academico:disciplina_list')
 
         try:
             Disciplina.objects.create(
@@ -43,7 +47,7 @@ def disciplina_create(request):
                 f'Já existe uma disciplina cadastrada com o código "{codigo}" ou nome "{nome}" para este curso.'
             )
 
-    return redirect('/academico/disciplinas/') 
+    return redirect('academico:disciplina_list') 
 
 def disciplina_update(request, pk):
     disciplina = get_object_or_404(Disciplina, pk=pk)
@@ -52,7 +56,7 @@ def disciplina_update(request, pk):
         disciplina.nome = request.POST.get('nome')
         disciplina.codigo = request.POST.get('codigo')
         disciplina.carga_horaria_semanal = request.POST.get('carga_horaria_semanal')
-        disciplina.periodo_recomendado = request.POST.get('periodo_recomendado') or None
+        disciplina.periodo_recomendado = request.POST.get('periodo') or None
         curso_id = request.POST.get('curso')
         disciplina.curso = Curso.objects.filter(id=curso_id).first() if curso_id else None
         
@@ -62,7 +66,7 @@ def disciplina_update(request, pk):
         except IntegrityError:
             messages.error(request, f'Já existe uma disciplina cadastrada com o código "{disciplina.codigo}" ou nome "{disciplina.nome}" para o curso selecionado.')
         
-        return redirect('/academico/disciplinas/')
+        return redirect('academico:disciplina_list')
     
     return render(request, 'academico/disciplina_update.html', {'disciplina': disciplina})
 
@@ -72,7 +76,7 @@ def disciplina_delete(request, pk):
     if request.method == 'POST':
         disciplina.delete()
         messages.success(request, 'Disciplina excluída com sucesso!')
-        return redirect('/academico/disciplinas/')
+        return redirect('academico:disciplina_list')
     
     return render(request, 'academico/disciplina_confirm_delete.html', {'disciplina': disciplina})
 
@@ -109,8 +113,14 @@ def curso_update(request, pk):
     if request.method == 'POST':
         curso.nome = request.POST.get('nome')
         curso.codigo = request.POST.get('codigo')
-        curso.save()
-        messages.success(request, "Curso atualizado com sucesso!")
+        try:
+            curso.save()
+            messages.success(request, "Curso atualizado com sucesso!")
+        except IntegrityError:
+            messages.error(
+                request,
+                f'Já existe um curso cadastrado com o código "{curso.codigo}" ou nome "{curso.nome}".'
+            )
     return redirect('academico:curso_list')
 
 def curso_delete(request, pk):

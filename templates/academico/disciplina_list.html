@@ -76,7 +76,7 @@
               data-nome="{{ disciplina.nome }}"
               data-curso="{{ disciplina.curso.id }}"
               data-carga="{{ disciplina.carga_horaria_semanal }}"
-              data-periodo="{{ disciplina.periodo_recomendado }}"
+              data-periodo="{{ disciplina.periodo_recomendado|default:'' }}"
               data-url="{% url 'academico:disciplina_update' disciplina.id %}"
               onclick="abrirModalEditar(this)">
               <i class="bi bi-pencil" style="font-size: 16px;"></i>
@@ -156,10 +156,10 @@
             </div>
 
             <div class="col-md-6">
-              <label for="id_periodo_recomendado" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Período</label>
-              <select name="periodo_recomendado" id="id_periodo_recomendado" class="form-select border-0 py-2 px-3 text-secondary" 
+              <label for="id_periodo" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Período</label>
+              <select name="periodo" id="id_periodo" class="form-select border-0 py-2 px-3 text-secondary" 
                       style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
-                <option value="" selected>Selecione...</option>
+                <option value="">Selecione...</option>
                 <option value="1">1º Período</option>
                 <option value="2">2º Período</option>
                 <option value="3">3º Período</option>
@@ -223,48 +223,54 @@
 
 {% endblock %}
 
-<<<<<<< HEAD
-    modalTitle.textContent = 'Nova Disciplina';
-    submitBtn.textContent = 'Criar registro';
-    form.action = "{% url 'academico:disciplina_create' %}";
-    form.reset();
-  }
-
-  function abrirModalEditar(botao) {
-    const form = document.getElementById('formDisciplina');
-    const modalTitle = document.getElementById('disciplinaModalLabel');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    modalTitle.textContent = 'Editar Disciplina';
-    submitBtn.textContent = 'Salvar alterações';
-    form.action = botao.getAttribute('data-url');
-
-    document.getElementById('id_codigo').value = botao.getAttribute('data-codigo') || '';
-    document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
-    document.getElementById('id_curso').value = botao.getAttribute('data-curso') || '';
-    document.getElementById('id_carga_horaria_semanal').value = botao.getAttribute('data-carga') || '';
-    document.getElementById('id_periodo_recomendado').value = botao.getAttribute('data-periodo') || '';
-  }
-
-  function abrirModalExcluir(botao) {
-    const form = document.getElementById('formExcluir');
-    form.action = botao.getAttribute('data-url');
-    document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
-  }
-
-  // Filtro de busca simples via JavaScript no front-end
-  document.getElementById('buscarDisciplinas').addEventListener('input', function() {
-    const termo = this.value.toLowerCase();
-    const linhas = document.querySelectorAll('#tabelaDisciplinas tbody tr');
-
-    linhas.forEach(linha => {
-      const texto = linha.textContent.toLowerCase();
-      linha.style.display = texto.includes(termo) ? '' : 'none';
-    });
-  });
-</script>
-=======
 {% block extra_js %}
   <script src="{% static 'js/disciplina.js' %}"></script>
->>>>>>> a9d36353be0131afd7042300b187abcb7d940ceb
+  <script>
+    function abrirModalCriar() {
+      const form = document.getElementById('formDisciplina');
+      const modalTitle = document.getElementById('disciplinaModalLabel');
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      modalTitle.textContent = 'Nova Disciplina';
+      submitBtn.textContent = 'Criar registro';
+      form.action = "{% url 'academico:disciplina_create' %}";
+      form.reset();
+    }
+
+    function abrirModalEditar(botao) {
+      const form = document.getElementById('formDisciplina');
+      const modalTitle = document.getElementById('disciplinaModalLabel');
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      modalTitle.textContent = 'Editar Disciplina';
+      submitBtn.textContent = 'Salvar alterações';
+      form.action = botao.getAttribute('data-url');
+
+      document.getElementById('id_codigo').value = botao.getAttribute('data-codigo') || '';
+      document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
+      document.getElementById('id_curso').value = botao.getAttribute('data-curso') || '';
+      document.getElementById('id_carga_horaria_semanal').value = botao.getAttribute('data-carga') || '';
+      
+      const elPeriodo = document.getElementById('id_periodo') || document.getElementById('id_periodo_recomendado');
+      if (elPeriodo) {
+        elPeriodo.value = botao.getAttribute('data-periodo') || '';
+      }
+    }
+
+    function abrirModalExcluir(botao) {
+      const form = document.getElementById('formExcluir');
+      form.action = botao.getAttribute('data-url');
+      document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
+    }
+
+    document.getElementById('buscarDisciplinas')?.addEventListener('input', function() {
+      const termo = this.value.toLowerCase();
+      const linhas = document.querySelectorAll('#tabelaDisciplinas tbody tr');
+
+      linhas.forEach(linha => {
+        const texto = linha.textContent.toLowerCase();
+        linha.style.display = texto.includes(termo) ? '' : 'none';
+      });
+    });
+  </script>
 {% endblock %}
