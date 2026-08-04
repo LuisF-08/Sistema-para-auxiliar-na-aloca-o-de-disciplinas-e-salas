@@ -57,7 +57,13 @@
           <a href="{% url 'academico:curso_list' %}" class="nav-link text-white">
     <i class="bi bi-journal-bookmark-fill me-2"></i> Cursos
           </a
-</a>
+      </a>
+      <a href="{% url 'academico:periodo_list' %}" class="nav-link {% if request.resolver_match.url_name == 'periodo_list' %}active{% endif %}">
+        <i class="bi bi-calendar2-range"></i> Períodos Letivos
+      </a>
+      <a href="{% url 'alocacao:horario_list' %}" class="nav-link {% if request.resolver_match.url_name == 'horario_list' %}active{% endif %}">
+        <i class="bi bi-clock"></i> Horários
+      </a>
       </nav>
 
       <!-- SEÇÃO: SISTEMA -->
@@ -75,7 +81,7 @@
 
     <!-- Rodapé do Usuário Logado  (EM BREVE COM USUARIOS)-->
     <div class="sidebar-footer">
-      <div class="sidebar-avatar">F</div>
+      <div class="sidebar-avatar">C</div>
       <div class="sidebar-user">
         <strong>Cordenador</strong>
         <span></span>
@@ -91,9 +97,9 @@
         SADAS &nbsp;/&nbsp; <strong>Dashboard</strong>
       </div>
       <div class="d-flex align-items-center gap-3">
-       <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold" style="border-radius: 8px; font-size: 13px;">
-        Semestre {{ semestre_atual|default:"2026.2"}}
-      </span>
+        <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold" style="border-radius: 8px; font-size: 13px;">
+          Semestre {{ periodo_atual_global|default:"—" }}
+        </span>
         <i class="bi bi-bell text-muted cursor-pointer fs-5"></i>
       </div>
     </header>

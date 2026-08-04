@@ -6,6 +6,15 @@ from .models import Turma
 from .models import Professor
 from academico.models import Curso, PeriodoLetivo
     
+from django.db import IntegrityError
+from django.db.models import ProtectedError
+from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib import messages
+from .models import Turma
+from .models import Professor
+from academico.models import Curso, PeriodoLetivo
+
+
 def turma_create(request):
 
     if request.method == 'POST':
@@ -16,7 +25,7 @@ def turma_create(request):
         turno = request.POST.get('turno')
 
         curso_instancia = Curso.objects.get(id=curso_id) if curso_id else None
-        
+
         periodo_instancia = None
         if periodo_letivo:
             if str(periodo_letivo).isdigit():
@@ -25,17 +34,21 @@ def turma_create(request):
                 apenas_numeros = ''.join(c for c in str(periodo_letivo) if c.isdigit())
                 if apenas_numeros:
                     semestre_num = int(apenas_numeros)
-                    periodo_instancia = PeriodoLetivo.objects.filter(semestre=semestre_num).first()
+                    # so considera periodos ativos aqui: nao faz sentido criar turma nova num periodo ja arquivado por engano.
+                    periodo_instancia = PeriodoLetivo.objects.filter(
+                        semestre=semestre_num, ativo=True,
+                    ).first()
         if not periodo_instancia:
-            periodo_instancia = PeriodoLetivo.objects.first()
+            # fallback: usa o periodo corrente (mais recente entre os ativos). antes isso caia num PeriodoLetivo.objects.first()
+            periodo_instancia = PeriodoLetivo.atual()
         if not periodo_instancia:
             return render(request, 'pessoas/turma_list.html', {
                 'turmas': Turma.objects.all(),
                 'cursos': Curso.objects.all(),
-                'periodos': PeriodoLetivo.objects.all(),
-                'erro': "Não foi possível criar a turma porque não há nenhum Período Letivo cadastrado no banco de dados."
+                'periodos': PeriodoLetivo.objects.filter(ativo=True),
+                'erro': "Não foi possível criar a turma porque não há nenhum Período Letivo ativo cadastrado no banco de dados."
             })
-        
+
         Turma.objects.create(
             nome=nome,
             curso=curso_instancia,
@@ -43,13 +56,13 @@ def turma_create(request):
             numero_alunos=numero_alunos if numero_alunos else 1,
             turno=turno
         )
-        
+
         return redirect('/pessoas/turmas/')
 
     turmas = Turma.objects.all()
     cursos = Curso.objects.all()
-    periodos = PeriodoLetivo.objects.all()
-    
+    periodos = PeriodoLetivo.objects.filter(ativo=True)
+
     return render(request, 'pessoas/turma_list.html', {
         'turmas': turmas,
         'cursos': cursos,
@@ -95,9 +108,16 @@ def turma_delete(request, pk):
     return redirect('pessoas:turma_list')  
 
 def professor_list(request):
-    professores = Professor.objects.all()
-    return render(request, 'pessoas/professor_list.html', {'professores': professores})
+    mostrar_inativos = request.GET.get('mostrar_inativos') == '1'
+    if mostrar_inativos:
+        professores = Professor.objects.all()
+    else:
+        professores = Professor.objects.filter(ativo=True)
 
+    return render(request, 'pessoas/professor_list.html', {
+        'professores': professores,
+        'mostrar_inativos': mostrar_inativos,
+    })
 
 def professor_create(request):
     if request.method == 'POST':
@@ -167,3 +187,4 @@ def professor_delete(request, pk):
             return redirect('professor_list') 
 
     return render(request, 'pessoas/professor_confirm_delete.html', {'professor': professor})
+

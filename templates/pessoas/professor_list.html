@@ -36,6 +36,12 @@
   </div>
 </div>
 
+{% if mostrar_inativos %}
+<a href="?" class="small text-secondary">Ocultar inativos</a>
+{% else %}
+<a href="?mostrar_inativos=1" class="small text-secondary">Mostrar inativos</a>
+{% endif %}
+
 <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
   <div class="table-responsive">
     <table class="table align-middle mb-0" style="font-family: system-ui, sans-serif;">
@@ -198,6 +204,7 @@
     </div>
   </div>
 </div>
+
 
 <script>
   function filtrarTabela() {

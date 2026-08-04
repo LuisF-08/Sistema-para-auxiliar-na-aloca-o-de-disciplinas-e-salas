@@ -93,38 +93,29 @@
           </div>
         </div>
 
-        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
-          <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">3. Horário</h6>
-          <div class="row g-3">
-            <div class="col-12 col-md-6">
-              <label class="form-label small fw-bold mb-1" style="color: #334155;">Dia da Semana *</label>
-              <select name="dia_semana" id="select-dia" class="form-select">
-                <option value="" selected disabled>Selecione o dia</option>
-                <option value="segunda">Segunda-feira</option>
-                <option value="terca">Terça-feira</option>
-                <option value="quarta">Quarta-feira</option>
-                <option value="quinta">Quinta-feira</option>
-                <option value="sexta">Sexta-feira</option>
-                <option value="sabado">Sábado</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="form-label small fw-bold mb-1" style="color: #334155;">Horário *</label>
-              <select name="horario" id="select-horario" class="form-select border-0"
-                style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;"
-                required>
-                <option value="" selected>Selecione o horário</option>
-                {% for horario in horarios %}
-                <option value="{{ horario.id }}">{{ horario.horario_inicio|time:"H:i" }} – {{
-                  horario.horario_fim|time:"H:i" }}</option>
-                {% empty %}
-                <option value="08:00 - 10:00">08:00 – 10:00</option>
-                <option value="10:00 - 12:00">10:00 – 12:00</option>
-                {% endfor %}
-              </select>
-            </div>
+      <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
+        <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">3. Horário</h6>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small fw-bold mb-1" style="color: #334155;">Dia e Horário *</label>
+            <select name="horario" id="select-horario" class="form-select border-0"
+              style="background-color: #F1F5F9; border-radius: 8px; padding: 12px; font-size: 14px; color: #334155;"
+              required>
+              <option value="" selected data-dia="">Selecione o dia e horário</option>
+              {% for horario in horarios %}
+              <option value="{{ horario.id }}" data-dia="{{ horario.get_dia_semana_display }}">
+                {{ horario.get_dia_semana_display }} — {{ horario.horario_inicio|time:"H:i" }} às {{ horario.horario_fim|time:"H:i" }}
+              </option>
+              {% empty %}
+              <option value="" disabled>Nenhum horário cadastrado — vá em "Horários" no menu para criar um</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted" style="font-size: 12px;">
+              Não achou o horário que precisa? Cadastre em <a href="{% url 'alocacao:horario_list' %}">Horários</a>.
+            </small>
           </div>
         </div>
+      </div>
 
         <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 12px; background: #FFFFFF;">
           <h6 class="fw-bold mb-3" style="font-size: 15px; color: #0F172A;">4. Sala</h6>
@@ -391,7 +382,7 @@
     const disciplina = document.getElementById('select-disciplina')?.value;
     const turmaSelect = document.getElementById('select-turma');
     const turmaId = turmaSelect?.value;
-    const dia = document.getElementById('select-dia')?.value;
+    const dia = diaSelecionadoTexto();
     const horario = document.getElementById('select-horario')?.value;
 
     const professor = document.getElementById('input-professor')?.value;
@@ -465,20 +456,28 @@
     validarFormulario();
   });
   document.getElementById('input-alunos')?.addEventListener('input', validarFormulario);
-  document.getElementById('select-dia')?.addEventListener('change', () => {
-    validarFormulario();
-    verificarDisponibilidade();
-  });
   document.getElementById('select-horario')?.addEventListener('change', () => {
-    validarFormulario();
-    verificarDisponibilidade();
-  });
+  validarFormulario();
+  verificarDisponibilidade();
+  atualizarResumoDia();
+});
 
-  function verificarDisponibilidade() {
-    const dia = document.getElementById('select-dia').value;
-    const horarioId = document.getElementById('select-horario').value;
+function diaSelecionadoTexto() {
+  const select = document.getElementById('select-horario');
+  if (!select || select.selectedIndex < 0) return '';
+  return select.options[select.selectedIndex].getAttribute('data-dia') || '';
+}
 
-    if (!dia || !horarioId) return;
+function atualizarResumoDia() {
+  const elementoResumo = document.getElementById('sum-dia');
+  if (elementoResumo) elementoResumo.innerText = diaSelecionadoTexto() || '—';
+}
+
+function verificarDisponibilidade() {
+  const dia = diaSelecionadoTexto();
+  const horarioId = document.getElementById('select-horario').value;
+
+  if (!dia || !horarioId) return;
 
     fetch(`/api/alocacoes/?dia_semana=${encodeURIComponent(dia)}&horario=${horarioId}`)
       .then(res => res.json())
@@ -595,7 +594,6 @@
 
   escutarMudanca('select-disciplina', 'sum-disciplina');
   escutarMudanca('select-turma', 'sum-turma');
-  escutarMudanca('select-dia', 'sum-dia');
   escutarMudanca('select-horario', 'sum-horario');
   escutarMudanca('input-alunos', 'sum-alunos');
 

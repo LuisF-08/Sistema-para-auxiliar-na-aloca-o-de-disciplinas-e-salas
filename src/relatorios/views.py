@@ -37,7 +37,7 @@ DIAS_SEMANA_ABREV = {
 
 
 def _periodo_ativo():
-    return PeriodoLetivo.objects.filter(ativo=True).first()
+    return PeriodoLetivo.atual()
 
 
 def calcular_taxa_ocupacao(periodo=None):

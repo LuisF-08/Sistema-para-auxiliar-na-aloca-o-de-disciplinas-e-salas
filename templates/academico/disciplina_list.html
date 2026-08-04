@@ -40,7 +40,7 @@
 <!-- Container da Tabela -->
 <div class="card border-0 shadow-sm" style="border-radius: 12px; background: #ffffff;">
   <div class="table-responsive">
-    <table class="table align-middle mb-0" style="font-family: system-ui, sans-serif;">
+    <table class="table align-middle mb-0" id="tabelaDisciplinas" style="font-family: system-ui, sans-serif;">
       <thead style="background-color: #ffffff;">
         <tr class="text-secondary" style="font-size: 12px; border-bottom: 1px solid #E9ECEF;">
           <th class="ps-4 py-3 fw-semibold text-uppercase" style="width: 15%; letter-spacing: 0.5px;">Código</th>
@@ -71,7 +71,7 @@
               data-nome="{{ disciplina.nome }}"
               data-curso="{{ disciplina.curso.id }}"
               data-carga="{{ disciplina.carga_horaria_semanal }}"
-              data-periodo="{{ disciplina.periodo.id }}"
+              data-periodo="{{ disciplina.periodo_recomendado }}"
               data-url="{% url 'academico:disciplina_update' disciplina.id %}"
               onclick="abrirModalEditar(this)">
               <i class="bi bi-pencil" style="font-size: 16px;"></i>
@@ -95,7 +95,6 @@
         </tr>
         {% endfor %}
       </tbody>
-
     </table>
   </div>
 </div>
@@ -152,8 +151,8 @@
             </div>
 
             <div class="col-md-6">
-              <label for="id_periodo" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Período</label>
-              <select name="periodo" id="id_periodo" class="form-select border-0 py-2 px-3 text-secondary" 
+              <label for="id_periodo_recomendado" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Período</label>
+              <select name="periodo_recomendado" id="id_periodo_recomendado" class="form-select border-0 py-2 px-3 text-secondary" 
                       style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
                 <option value="" selected>Selecione...</option>
                 <option value="1">1º Período</option>
@@ -166,9 +165,6 @@
                 <option value="8">8º Período</option>
                 <option value="9">9º Período</option>
                 <option value="10">10º Período</option>
-                {% for p in periodos %}
-                  <option value="{{ p.id }}">{{ p }}</option>
-                {% endfor %}
               </select>
             </div>
 
@@ -244,8 +240,8 @@
     document.getElementById('id_codigo').value = botao.getAttribute('data-codigo') || '';
     document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
     document.getElementById('id_curso').value = botao.getAttribute('data-curso') || '';
-    document.getElementById('id_carga_horaria').value = botao.getAttribute('data-carga') || '';
-    document.getElementById('id_periodo').value = botao.getAttribute('data-periodo') || '';
+    document.getElementById('id_carga_horaria_semanal').value = botao.getAttribute('data-carga') || '';
+    document.getElementById('id_periodo_recomendado').value = botao.getAttribute('data-periodo') || '';
   }
 
   function abrirModalExcluir(botao) {
@@ -253,5 +249,16 @@
     form.action = botao.getAttribute('data-url');
     document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
   }
+
+  // Filtro de busca simples via JavaScript no front-end
+  document.getElementById('buscarDisciplinas').addEventListener('input', function() {
+    const termo = this.value.toLowerCase();
+    const linhas = document.querySelectorAll('#tabelaDisciplinas tbody tr');
+
+    linhas.forEach(linha => {
+      const texto = linha.textContent.toLowerCase();
+      linha.style.display = texto.includes(termo) ? '' : 'none';
+    });
+  });
 </script>
 {% endblock %}

@@ -8,6 +8,10 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+admin.site.site_header = "SADAS — Administração"
+admin.site.site_title = "SADAS Admin"
+admin.site.index_title = "Painel de Alocação Acadêmica"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='alocacao/dashboard.html'), name='dashboard'),

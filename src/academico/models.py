@@ -58,6 +58,11 @@ class PeriodoLetivo(TimeStampedModel):
             models.Index(fields=["ano", "semestre"], name="periodo_letivo_idx"),
         ]
 
+    @classmethod
+    def atual(cls):
+        # retorna o periodo letivo corrente: o mais recente entre os ativos.
+        return cls.objects.filter(ativo=True).first()
+
     def __str__(self):
         return f"{self.ano}.{self.semestre}"
 
