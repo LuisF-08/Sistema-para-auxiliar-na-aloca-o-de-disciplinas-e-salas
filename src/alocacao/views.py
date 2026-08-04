@@ -1,11 +1,10 @@
-
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from academico.models import Curso, Disciplina, PeriodoLetivo
 from pessoas.models import Professor, Turma
 from infraestrutura.models import Sala
-from alocacao.models import Alocacao, Horario 
+from alocacao.models import STATUS_ATIVOS_ALOCACAO, Alocacao, Horario 
 from alocacao.services.sugestoes import gerar_sugestoes
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -57,6 +56,15 @@ def alocacao_list(request):
     return render(request, 'alocacao/alocacao_list.html', context)
 
 def alocacao_create(request):
+    context_base = {
+        'periodos': PeriodoLetivo.objects.all(),
+        'professores': Professor.objects.all(),
+        'disciplinas': Disciplina.objects.all(),
+        'turmas': Turma.objects.all(),
+        'salas': Sala.objects.all(),
+        'horarios': Horario.objects.all(),
+    }
+
     if request.method == 'POST':
         disciplina_id = request.POST.get('disciplina')
         turma_id = request.POST.get('turma')
@@ -64,30 +72,27 @@ def alocacao_create(request):
         sala_id = request.POST.get('sala')
         horario_id = request.POST.get('horario')
 
+        if not all([disciplina_id, turma_id, professor_id, sala_id, horario_id]):
+            messages.error(request, 'Erro ao criar alocação!')
+            return render(
+                request,
+                'alocacao/alocacao_list.html',
+                {**context_base, 'erro': 'Preencha todos os campos obrigatórios.'},
+            )
+
         periodo_id = None
-        turma_obj = None
-        sala_obj = None 
 
         if turma_id:
             try:
                 turma_obj = Turma.objects.get(pk=turma_id)
                 periodo_id = turma_obj.periodo_letivo.id
             except Turma.DoesNotExist:
-                pass
-                
-        if sala_id:
-            try:
-                sala_obj = Sala.objects.get(pk=sala_id)
-            except Sala.DoesNotExist:
-                pass
-        if turma_id:
-            try:
-                turma_obj = Turma.objects.get(pk=turma_id)
-                periodo_id = turma_obj.periodo_letivo.id
-            except Turma.DoesNotExist:
-                pass
-        
-        print("DADOS RECEBIDOS:", disciplina_id, turma_id, professor_id, sala_id, horario_id, periodo_id)
+                messages.error(request, 'Erro ao criar alocação!')
+                return render(
+                    request,
+                    'alocacao/alocacao_list.html',
+                    {**context_base, 'erro': 'Turma informada não existe.'},
+                )
 
         try:
             alocacao = Alocacao.objects.create(
@@ -96,42 +101,24 @@ def alocacao_create(request):
                 professor_id=professor_id,
                 sala_id=sala_id,
                 horario_id=horario_id,
-                periodo_letivo_id=periodo_id
+                periodo_letivo_id=periodo_id,
             )
-            print("SUCESSO! Criada alocacao ID:", alocacao.pk)
             messages.success(request, 'Alocação criada com sucesso!')
             return redirect('grade_horaria')
-            
-        except Exception as e:
-            print("ERRO AO SALVAR NO BANCO:", e)
-            context = {
-                'periodos': PeriodoLetivo.objects.all(),
-                'professores': Professor.objects.all(),
-                'disciplinas': Disciplina.objects.all(),
-                'turmas': Turma.objects.all(),
-                'salas': Sala.objects.all(),
-                'horarios': Horario.objects.all(),
-                'erro': f"Erro ao salvar: {e}"
-            }
-            return render(request, 'alocacao/alocacao_list.html', context)
-        
-    
+
+        except Exception as exc:
+            messages.error(request, 'Erro ao criar alocação!')
+            return render(
+                request,
+                'alocacao/alocacao_list.html',
+                {**context_base, 'erro': f'Erro ao salvar: {exc}'},
+            )
+
     ultima_turma = Turma.objects.order_by('-id').first()
     semestre_atual = ultima_turma.periodo_letivo if ultima_turma else "2026.2"
-    
-    context = {
-        'semestre_atual': semestre_atual,
-    }
+    context_base['semestre_atual'] = semestre_atual
 
-    context = {
-        'periodos': PeriodoLetivo.objects.all(),
-        'professores': Professor.objects.all(),
-        'disciplinas': Disciplina.objects.all(),
-        'turmas': Turma.objects.all(),
-        'salas': Sala.objects.all(),
-        'horarios': Horario.objects.all(),
-    }
-    return render(request, 'alocacao/alocacao_list.html', context)
+    return render(request, 'alocacao/alocacao_list.html', context_base)
 
 def dashboard_view(request):
     return render(request, 'alocacao/dashboard.html')
@@ -203,7 +190,6 @@ DIAS_MAPA = {
     'terça': 'terca'
 }
 
-# Slots fixos das linhas da tabela
 HORARIOS_GRID = [
     '08:00', '09:00', '10:00', '11:00', '12:00',
     '13:00', '14:00', '15:00', '16:00', '17:00'
@@ -211,20 +197,14 @@ HORARIOS_GRID = [
 
 
 def normalizar_horario(horario_obj):
-    """
-    Recebe o objeto TimeField (ex: 08:00:00) ou string e extrai o slot
-    correspondente da grade (ex: '08:00').
-    """
     if not horario_obj:
         return ''
     
-    # Se for um objeto de hora (TimeField), formata para HH:MM
     if hasattr(horario_obj, 'strftime'):
         horario_str = horario_obj.strftime("%H:%M")
     else:
         horario_str = str(horario_obj).split('-')[0].strip()
 
-    # Mapeia para a hora cheia do grid
     for slot in HORARIOS_GRID:
         hora_slot = int(slot.split(':')[0])
         try:
@@ -235,6 +215,33 @@ def normalizar_horario(horario_obj):
             pass
 
     return horario_str
+
+
+def classificar_alocacao(alocacao, todas_alocacoes):
+    if alocacao.turma.numero_alunos > alocacao.sala.capacidade_alunos:
+        return 'aviso'
+
+    conflito_professor = [
+        a for a in todas_alocacoes
+        if a.pk != alocacao.pk
+        and a.professor_id == alocacao.professor_id
+        and a.horario_id == alocacao.horario_id
+        and a.status in STATUS_ATIVOS_ALOCACAO
+    ]
+    if conflito_professor:
+        return 'critico'
+
+    conflito_turma = [
+        a for a in todas_alocacoes
+        if a.pk != alocacao.pk
+        and a.turma_id == alocacao.turma_id
+        and a.horario_id == alocacao.horario_id
+        and a.status in STATUS_ATIVOS_ALOCACAO
+    ]
+    if conflito_turma:
+        return 'critico'
+
+    return None
 
 
 def grade_horaria_view(request):
@@ -249,9 +256,9 @@ def grade_horaria_view(request):
     if curso_id and curso_id != '' and curso_id != 'todos':
         alocacoes_qs = alocacoes_qs.filter(disciplina__curso_id=curso_id)
 
-    alocacoes = alocacoes_qs.all()
+    alocacoes = list(alocacoes_qs.all())
 
-    print(f"\n[DEBUG] TOTAL DE ALOCAÇÕES ENCONTRADAS NO BANCO: {alocacoes.count()}")
+    print(f"\n[DEBUG] TOTAL DE ALOCAÇÕES ENCONTRADAS NO BANCO: {len(alocacoes)}")
 
     matriz_grade = {
         hora: {dia: [] for dia in dias_semana_colunas}
@@ -263,7 +270,9 @@ def grade_horaria_view(request):
             print(f"[DEBUG] Alocação ID {alocacao.pk} ignorada: Sem horário associado.")
             continue
 
-        # Acessa os campos do model Horario
+        alocacao.tipo_conflito = classificar_alocacao(alocacao, alocacoes)
+        alocacao.tem_conflito = alocacao.tipo_conflito == 'critico'
+
         dia_num = alocacao.horario.dia_semana
         dia_coluna = DIAS_MAPA.get(dia_num, str(dia_num).lower().strip())
         
@@ -272,14 +281,12 @@ def grade_horaria_view(request):
 
         print(f"[DEBUG] Hora no banco: '{hora_inicio}' -> Mapeada para slot: '{slot_horario}' | Dia no banco: '{dia_num}' (Coluna: '{dia_coluna}')")
 
-        # Casamento de posição na tabela
         if slot_horario in matriz_grade and dia_coluna in matriz_grade[slot_horario]:
             matriz_grade[slot_horario][dia_coluna].append(alocacao)
             print("  '--> MATCH ENCONTRADO! Alocacao adicionada.")
         else:
             print("  '--> NÃO DEU MATCH!")
 
-    # 4. Estrutura as linhas para renderização no template HTML
     linhas_grade = []
     for hora in HORARIOS_GRID:
         linha = {
@@ -294,14 +301,20 @@ def grade_horaria_view(request):
         }
         linhas_grade.append(linha)
 
+    total_conflitos = sum(
+        1 for a in alocacoes
+        if getattr(a, 'tipo_conflito', None) == 'critico'
+    )
+
     cursos_banco = Curso.objects.all()
 
     context = {
         'linhas_grade': linhas_grade,
         'dias_semana': dias_semana_colunas,
         'horarios_grid': HORARIOS_GRID,
-        'cursos': cursos_banco,            # <--- Passa a lista dinâmica do banco
+        'cursos': cursos_banco,            
         'curso_selecionado': curso_id,
+        'total_conflitos': total_conflitos,
     }
 
     return render(request, 'alocacao/grade_horaria.html', context)
@@ -325,7 +338,6 @@ def sugestoes_conflito_api(request):
     turma_id = request.GET.get('turma_id')
     num_alunos = request.GET.get('num_alunos', 0)
 
-    # Descobre o periodo_letivo a partir da turma
     periodo_letivo_id = None
     if turma_id:
         try:
