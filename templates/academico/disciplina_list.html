@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}SADAS - Disciplinas{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/listas.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-start mb-1">
@@ -216,12 +221,9 @@
   </div>
 </div>
 
-<script>
-  function abrirModalCriar() {
-    const form = document.getElementById('formDisciplina');
-    const modalTitle = document.getElementById('disciplinaModalLabel');
-    const submitBtn = form.querySelector('button[type="submit"]');
+{% endblock %}
 
+<<<<<<< HEAD
     modalTitle.textContent = 'Nova Disciplina';
     submitBtn.textContent = 'Criar registro';
     form.action = "{% url 'academico:disciplina_create' %}";
@@ -261,4 +263,8 @@
     });
   });
 </script>
+=======
+{% block extra_js %}
+  <script src="{% static 'js/disciplina.js' %}"></script>
+>>>>>>> a9d36353be0131afd7042300b187abcb7d940ceb
 {% endblock %}

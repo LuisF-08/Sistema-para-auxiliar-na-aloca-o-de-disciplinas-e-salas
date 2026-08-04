@@ -140,6 +140,11 @@ class ProfessorViewsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_formulario_criacao_envia_para_view_de_criacao(self):
+        response = self.client.get(reverse("pessoas:professor_list"))
+
+        self.assertContains(response, reverse("pessoas:professor_create"))
+
     def test_criar_professor_via_post(self):
         response = self.client.post(reverse("pessoas:professor_create"), {
             "nome": "carla dias",

@@ -1,9 +1,23 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}SADAS - Nova Alocação{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/alocacao.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid p-0">
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert {% if 'error' in message.tags or 'danger' in message.tags %}alert-danger{% else %}alert-success{% endif %} py-2" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
   <div class="mb-4">
     <h2 class="fw-bold m-0" style="font-size: 24px; color: #0F172A;">Nova Alocação</h2>
     <p class="text-muted small mt-1 mb-0" style="color: #64748B !important;">Preencha os dados para criar uma nova
@@ -124,25 +138,23 @@
 
           <div class="row g-3">
             {% for sala in salas %}
-            <div class="col-12 col-md-6">
-              <div class="room-item d-flex justify-content-between align-items-center p-3 border rounded-3"
-                style="cursor: pointer; border-color: #E2E8F0 !important;" data-sala-id="{{ sala.id }}"
-                data-capacidade="{{ sala.capacidade_alunos }}"
-                onclick="selecionarSala(this, '{{ sala.id }}', '{{ sala.nome }}', '{{ sala.capacidade_alunos }}')">
-                <div>
-                  <div class="fw-bold text-dark small">{{ sala.nome }}</div>
-                  <div class="text-muted small" style="font-size: 12px;">{{ sala.tipo_sala|default:"Sala" }} · {{
-                    sala.capacidade_alunos }} lugares</div>
+              <div class="col-12 col-md-6">
+                <div class="room-item d-flex justify-content-between align-items-center p-3 border rounded-3" 
+                    style="cursor: pointer; border-color: #E2E8F0 !important;" 
+                    data-sala-id="{{ sala.id }}"
+                    data-capacidade="{{ sala.capacidade_alunos }}"
+                    onclick="selecionarSala(this, '{{ sala.id }}', '{{ sala.nome }}', '{{ sala.capacidade_alunos }}')">
+                  <div>
+                    <div class="fw-bold text-dark small">{{ sala.nome }}</div>
+                    <div class="text-muted small" style="font-size: 12px;">{{ sala.get_tipo_sala_display|default:"Sala" }} · {{ sala.capacidade_alunos }} lugares</div>
+                  </div>
+                  <span class="status-badge badge bg-success-subtle text-success px-2 py-1 border border-success-subtle rounded-2" style="font-size: 11px;">Disponível</span>
                 </div>
-                <span
-                  class="status-badge badge bg-success-subtle text-success px-2 py-1 border border-success-subtle rounded-2"
-                  style="font-size: 11px;">Disponível</span>
               </div>
-            </div>
             {% empty %}
-            <div class="col-12">
-              <p class="text-muted small">Nenhuma sala cadastrada.</p>
-            </div>
+              <div class="col-12">
+                <p class="text-muted small">Nenhuma sala cadastrada.</p>
+              </div>
             {% endfor %}
           </div>
         </div>

@@ -1,7 +1,8 @@
 from django.db import IntegrityError
-from django.db.models import ProtectedError
+from django.db.models import Count, ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
+from django.urls import NoReverseMatch
 from .models import Turma
 from .models import Professor
 from academico.models import Curso, PeriodoLetivo
@@ -108,11 +109,16 @@ def turma_delete(request, pk):
     return redirect('pessoas:turma_list')  
 
 def professor_list(request):
+<<<<<<< HEAD
     mostrar_inativos = request.GET.get('mostrar_inativos') == '1'
     if mostrar_inativos:
         professores = Professor.objects.all()
     else:
         professores = Professor.objects.filter(ativo=True)
+=======
+    professores = Professor.objects.annotate(alocacoes_count=Count('alocacoes'))
+    return render(request, 'pessoas/professor_list.html', {'professores': professores})
+>>>>>>> a9d36353be0131afd7042300b187abcb7d940ceb
 
     return render(request, 'pessoas/professor_list.html', {
         'professores': professores,
@@ -139,7 +145,7 @@ def professor_create(request):
             messages.error(request, f'Já existe um professor cadastrado com o e-mail "{email}".')
 
         
-        return redirect('/pessoas/professores/')
+        return redirect('pessoas:professor_list')
 
     professores = Professor.objects.all()
     
@@ -174,17 +180,23 @@ def professor_update(request, pk):
 def professor_delete(request, pk):
     professor = get_object_or_404(Professor, pk=pk)
     if request.method == 'POST':
-        try:
-            professor.delete()
-            messages.success(request, "Professor excluído com sucesso.")
-            return redirect('professor_list') 
-            
-        except ProtectedError:
-            messages.error(
-                request, 
-                f"Não é possível excluir o(a) professor(a) {professor.nome} pois ele(a) possui alocações ativas."
-            )
-            return redirect('professor_list') 
+        alocacoes = professor.alocacoes.all()
+        total_alocacoes = alocacoes.count()
 
+<<<<<<< HEAD
     return render(request, 'pessoas/professor_confirm_delete.html', {'professor': professor})
 
+=======
+        if total_alocacoes > 0:
+            alocacoes.delete()
+
+        professor.delete()
+        mensagem = f"Professor {professor.nome} excluído com sucesso."
+        if total_alocacoes > 0:
+            mensagem += f" {total_alocacoes} alocação(ões) relacionadas também foram removidas."
+
+        messages.success(request, mensagem)
+        return redirect('pessoas:professor_list')
+
+    return redirect('pessoas:professor_list')
+>>>>>>> a9d36353be0131afd7042300b187abcb7d940ceb

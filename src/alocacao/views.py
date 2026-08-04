@@ -7,7 +7,7 @@ from django.contrib import messages
 from academico.models import Curso, Disciplina, PeriodoLetivo
 from pessoas.models import Professor, Turma
 from infraestrutura.models import Sala
-from alocacao.models import Alocacao, Horario
+from alocacao.models import STATUS_ATIVOS_ALOCACAO, Alocacao, Horario 
 from alocacao.services.sugestoes import gerar_sugestoes
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -65,12 +65,32 @@ def alocacao_list(request):
 
 
 def alocacao_create(request):
+    context_base = {
+        'periodos': PeriodoLetivo.objects.all(),
+        'professores': Professor.objects.all(),
+        'disciplinas': Disciplina.objects.all(),
+        'turmas': Turma.objects.all(),
+        'salas': Sala.objects.all(),
+        'horarios': Horario.objects.all(),
+    }
+
     if request.method == 'POST':
+        for _ in messages.get_messages(request):
+            pass
+
         disciplina_id = request.POST.get('disciplina')
         turma_id = request.POST.get('turma')
         professor_id = request.POST.get('professor')
         sala_id = request.POST.get('sala')
         horario_id = request.POST.get('horario')
+
+        if not all([disciplina_id, turma_id, professor_id, sala_id, horario_id]):
+            messages.error(request, 'Erro ao criar alocação!')
+            return render(
+                request,
+                'alocacao/alocacao_list.html',
+                {**context_base, 'erro': 'Preencha todos os campos obrigatórios.'},
+            )
 
         periodo_id = None
         turma_obj = None
@@ -93,6 +113,12 @@ def alocacao_create(request):
             "Dados recebidos para nova alocação: disciplina=%s turma=%s professor=%s sala=%s horario=%s periodo=%s",
             disciplina_id, turma_id, professor_id, sala_id, horario_id, periodo_id,
         )
+        messages.error(request, 'Erro ao criar alocação!')
+                return render(
+                    request,
+                    'alocacao/alocacao_list.html',
+                    {**context_base, 'erro': 'Turma informada não existe.'},
+                )
 
         try:
             alocacao = Alocacao.objects.create(
@@ -101,7 +127,7 @@ def alocacao_create(request):
                 professor_id=professor_id,
                 sala_id=sala_id,
                 horario_id=horario_id,
-                periodo_letivo_id=periodo_id
+                periodo_letivo_id=periodo_id,
             )
             logger.info("Alocação criada com sucesso: id=%s", alocacao.pk)
             return redirect('alocacao:grade_horaria')
@@ -128,6 +154,22 @@ def alocacao_create(request):
         'horarios': Horario.objects.all(),
     }
     return render(request, 'alocacao/alocacao_list.html', context)
+            messages.success(request, 'Alocação criada com sucesso!')
+            return redirect('grade_horaria')
+
+        except Exception as exc:
+            messages.error(request, 'Erro ao criar alocação!')
+            return render(
+                request,
+                'alocacao/alocacao_list.html',
+                {**context_base, 'erro': f'Erro ao salvar: {exc}'},
+            )
+
+    ultima_turma = Turma.objects.order_by('-id').first()
+    semestre_atual = ultima_turma.periodo_letivo if ultima_turma else "2026.2"
+    context_base['semestre_atual'] = semestre_atual
+
+    return render(request, 'alocacao/alocacao_list.html', context_base)
 
 
 def dashboard_view(request):
@@ -141,10 +183,7 @@ def dashboard_data_api(request):
         total_salas = Sala.objects.count() or 1
         salas_ocupadas = Alocacao.objects.values('sala').distinct().count()
         taxa_ocupacao = int((salas_ocupadas / total_salas) * 100)
-
         total_professores = Professor.objects.count()
-        profs_alocados = Alocacao.objects.values('professor').distinct().count()
-        professores_sem_alocacao = max(0, total_professores - profs_alocados)
 
         dias_semana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
         dados_ocupacao_dias = []
@@ -157,12 +196,39 @@ def dashboard_data_api(request):
         salas_alocadas = Alocacao.objects.values('sala').distinct().count()
         salas_manutencao = Sala.objects.filter(ativo=False).count()
         salas_livres = max(0, total_salas - salas_alocadas - salas_manutencao)
+        alocacoes_ativas = list(Alocacao.objects.select_related('horario', 'sala', 'turma', 'professor').filter(status__in=STATUS_ATIVOS_ALOCACAO))
+        total_alocacoes = len(alocacoes_ativas)
+        salas_alocadas = Alocacao.objects.filter(status__in=STATUS_ATIVOS_ALOCACAO).values('sala').distinct().count()
+        salas_manutencao = Sala.objects.filter(ativo=False).count()
+        salas_livres = max(0, total_salas - salas_alocadas - salas_manutencao)
+
+        conflitos_criticos = 0
+        conflitos_avisos = 0
+        for alocacao in alocacoes_ativas:
+            nivel = classificar_alocacao(alocacao, alocacoes_ativas)
+            if nivel == 'critico':
+                conflitos_criticos += 1
+            elif nivel == 'aviso':
+                conflitos_avisos += 1
+
+        conflitos_pendentes = conflitos_criticos + conflitos_avisos
+        taxa_ocupacao = int((salas_alocadas / total_salas) * 100) if total_salas > 0 else 0
+
+        dados_ocupacao_dias = []
+        for dia in ['1', '2', '3', '4', '5']:
+            qtd = Alocacao.objects.filter(status__in=STATUS_ATIVOS_ALOCACAO, horario__dia_semana=dia).count()
+            percentual = int((qtd / total_salas) * 100) if total_salas > 0 else 0
+            dados_ocupacao_dias.append(percentual)
 
         data = {
             'total_alocacoes': total_alocacoes,
             'conflitos_pendentes': conflitos_pendentes,
+            'conflitos_criticos': conflitos_criticos,
+            'conflitos_avisos': conflitos_avisos,
             'taxa_ocupacao': taxa_ocupacao,
-            'professores_sem_alocacao': professores_sem_alocacao,
+            'professores_sem_alocacao': max(0, total_professores - Alocacao.objects.filter(status__in=STATUS_ATIVOS_ALOCACAO).values('professor').distinct().count()),
+            'total_professores': total_professores,
+            'total_salas': total_salas,
             'dados_ocupacao_dias': dados_ocupacao_dias,
             'salas_alocadas': salas_alocadas,
             'salas_livres': salas_livres,
@@ -205,13 +271,10 @@ HORARIOS_GRID = [
 
 
 def normalizar_horario(horario_obj):
-    """
-    Recebe o objeto TimeField (ex: 08:00:00) ou string e extrai o slot
-    correspondente da grade (ex: '08:00').
-    """
     if not horario_obj:
         return ''
 
+    
     if hasattr(horario_obj, 'strftime'):
         horario_str = horario_obj.strftime("%H:%M")
     else:
@@ -227,6 +290,33 @@ def normalizar_horario(horario_obj):
             pass
 
     return horario_str
+
+
+def classificar_alocacao(alocacao, todas_alocacoes):
+    if alocacao.turma.numero_alunos > alocacao.sala.capacidade_alunos:
+        return 'aviso'
+
+    conflito_professor = [
+        a for a in todas_alocacoes
+        if a.pk != alocacao.pk
+        and a.professor_id == alocacao.professor_id
+        and a.horario_id == alocacao.horario_id
+        and a.status in STATUS_ATIVOS_ALOCACAO
+    ]
+    if conflito_professor:
+        return 'critico'
+
+    conflito_turma = [
+        a for a in todas_alocacoes
+        if a.pk != alocacao.pk
+        and a.turma_id == alocacao.turma_id
+        and a.horario_id == alocacao.horario_id
+        and a.status in STATUS_ATIVOS_ALOCACAO
+    ]
+    if conflito_turma:
+        return 'critico'
+
+    return None
 
 
 def grade_horaria_view(request):
@@ -269,9 +359,14 @@ def grade_horaria_view(request):
             logger.debug("Alocação id=%s ignorada: sem horário associado.", alocacao.pk)
             continue
 
+        alocacao.tipo_conflito = classificar_alocacao(alocacao, alocacoes)
+        alocacao.tem_conflito = alocacao.tipo_conflito == 'critico'
+
         dia_num = alocacao.horario.dia_semana
         dia_coluna = DIAS_MAPA.get(dia_num, str(dia_num).lower().strip())
         slot_horario = alocacao.horario.horario_inicio.strftime('%H:%M')
+
+        print(f"[DEBUG] Hora no banco: '{hora_inicio}' -> Mapeada para slot: '{slot_horario}' | Dia no banco: '{dia_num}' (Coluna: '{dia_coluna}')")
 
         if slot_horario in matriz_grade and dia_coluna in matriz_grade[slot_horario]:
             matriz_grade[slot_horario][dia_coluna].append(alocacao)
@@ -292,6 +387,11 @@ def grade_horaria_view(request):
         }
         linhas_grade.append(linha)
 
+    total_conflitos = sum(
+        1 for a in alocacoes
+        if getattr(a, 'tipo_conflito', None) == 'critico'
+    )
+
     cursos_banco = Curso.objects.all()
 
     context = {
@@ -299,7 +399,9 @@ def grade_horaria_view(request):
         'dias_semana': dias_semana_colunas,
         'horarios_grid': horarios_grid,
         'cursos': cursos_banco,
+        'horarios_grid': HORARIOS_GRID,         
         'curso_selecionado': curso_id,
+        'total_conflitos': total_conflitos,
     }
 
     return render(request, 'alocacao/grade_horaria.html', context)

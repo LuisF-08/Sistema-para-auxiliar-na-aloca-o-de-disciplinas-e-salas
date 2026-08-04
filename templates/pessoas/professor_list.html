@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}SADAS - Professores{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/listas.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-start mb-1">
@@ -93,6 +98,7 @@
               data-bs-target="#modalExcluir"
               data-id="{{ professor.pk }}"
               data-nome="{{ professor.nome }}"
+              data-alocacoes="{{ professor.alocacoes_count }}"
               data-url="{% url 'pessoas:professor_delete' professor.pk %}"
               onclick="abrirModalExcluir(this)">
               <i class="bi bi-trash" style="font-size: 16px;"></i>
@@ -121,7 +127,7 @@
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form id="formProfessor" method="post" action="">
+      <form id="formProfessor" method="post" action="{% url 'pessoas:professor_create' %}" data-create-url="{% url 'pessoas:professor_create' %}">
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
@@ -186,7 +192,8 @@
       </div>
       <div class="px-3 py-2" style="font-size: 14px;">
         <p class="mb-2">Você está prestes a excluir o professor <strong id="nomeExcluir"></strong>.</p>
-        <div class="alert alert-warning py-2 mb-0" style="font-size: 13px;">Esta ação não pode ser desfeita.</div>
+        <div class="alert alert-warning py-2 mb-2" style="font-size: 13px;" id="mensagemExcluir">Esta ação não pode ser desfeita.</div>
+        <div class="alert alert-light py-2 mb-0 text-secondary" style="font-size: 13px;" id="detalheExcluir"></div>
       </div>
       <form method="post" id="formExcluir" action="">
         {% csrf_token %}
@@ -213,39 +220,8 @@
       linha.style.display = linha.textContent.toLowerCase().includes(termo) ? '' : 'none';
     });
   }
+{% endblock %}
 
-  function abrirModalCriar() {
-    const form = document.getElementById('formProfessor');
-    const modalTitle = document.getElementById('professorModalLabel');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    modalTitle.textContent = 'Novo Professor';
-    submitBtn.textContent = 'Criar registro';
-    form.action = "{% url 'pessoas:professor_create' %}";
-    form.reset();
-    document.getElementById('id_ativo').checked = true;
-  }
-
-  function abrirModalEditar(botao) {
-    const form = document.getElementById('formProfessor');
-    const modalTitle = document.getElementById('professorModalLabel');
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    modalTitle.textContent = 'Editar Professor';
-    submitBtn.textContent = 'Salvar alterações';
-    form.action = botao.getAttribute('data-url');
-
-    document.getElementById('id_nome').value = botao.getAttribute('data-nome') || '';
-    document.getElementById('id_email').value = botao.getAttribute('data-email') || '';
-    document.getElementById('id_especialidade').value = botao.getAttribute('data-especialidade') || '';
-    document.getElementById('id_carga').value = botao.getAttribute('data-carga') || '';
-    document.getElementById('id_ativo').checked = botao.getAttribute('data-ativo') === '1';
-  }
-
-  function abrirModalExcluir(botao) {
-    const form = document.getElementById('formExcluir');
-    form.action = botao.getAttribute('data-url');
-    document.getElementById('nomeExcluir').textContent = botao.getAttribute('data-nome') || '';
-  }
-</script>
+{% block extra_js %}
+  <script src="{% static 'js/professor.js' %}"></script>
 {% endblock %}
