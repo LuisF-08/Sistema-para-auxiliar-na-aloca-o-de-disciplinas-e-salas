@@ -1,4 +1,5 @@
 
+from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
 from academico.models import Curso, Disciplina, PeriodoLetivo
@@ -98,6 +99,7 @@ def alocacao_create(request):
                 periodo_letivo_id=periodo_id
             )
             print("SUCESSO! Criada alocacao ID:", alocacao.pk)
+            messages.success(request, 'Alocação criada com sucesso!')
             return redirect('grade_horaria')
             
         except Exception as e:
@@ -112,7 +114,8 @@ def alocacao_create(request):
                 'erro': f"Erro ao salvar: {e}"
             }
             return render(request, 'alocacao/alocacao_list.html', context)
-
+        
+    
     ultima_turma = Turma.objects.order_by('-id').first()
     semestre_atual = ultima_turma.periodo_letivo if ultima_turma else "2026.2"
     
