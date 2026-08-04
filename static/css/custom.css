@@ -1,58 +1,138 @@
 :root {
-  --primary:        #0d6efd;
-  --primary-dark:   #0a58ca;
-  --success:        #198754;
-  --warning:        #fcbd00;
-  --danger:         #dc3545;
-  --text-main:      #212529;
-  --text-muted:     #6c757d;
-  --bg-page:        #f5f6fa;
-  --bg-card:        #ffffff;
-  --border:         #dee2eintall6;
-  --radius:         8px;
-  --shadow-sm:      0 1px 4px rgba(0,0,0,.08);
-  --shadow-md:      0 4px 16px rgba(0,0,0,.10);
+  --primary: #0d6efd;
+  --primary-dark: #0a58ca;
+  --success: #198754;
+  --warning: #fcbd00;
+  --danger: #dc3545;
+  --text-main: #212529;
+  --text-muted: #6c757d;
+  --bg-page: #f5f6fa;
+  --bg-card: #ffffff;
+  --border: #dee2e6;
+  --radius: 8px;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+
+  --sidebar-width: 260px;
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #94a3b8;
+  --sidebar-active: #3b82f6;
+  --topbar-height: 60px;
 }
 
-/* ============================================================
-   BASE
-   ============================================================ */
 body {
+  margin: 0;
   background-color: var(--bg-page);
   color: var(--text-main);
   font-size: 0.9rem;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* ============================================================
-   NAVBAR
-   ============================================================ */
-.navbar {
-  box-shadow: var(--shadow-sm);
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--sidebar-bg);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
 }
 
-.navbar-brand {
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 18px;
+  border-bottom: 1px solid #334155;
+}
+
+.sidebar-brand-icon {
+  font-size: 1.6rem;
+}
+
+.sidebar-brand-text strong {
+  display: block;
   font-size: 1.1rem;
-  letter-spacing: .5px;
 }
 
-.navbar .nav-link {
-  font-size: 0.875rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: var(--radius);
-  transition: background .15s;
+.sidebar-brand-text span {
+  font-size: 0.75rem;
+  color: var(--sidebar-text);
 }
 
-.navbar .nav-link:hover {
-  background: rgba(255,255,255,.15);
+.sidebar-section-label {
+  padding: 16px 18px 6px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
 }
 
-.navbar .nav-link.active {
-  background: rgba(255,255,255,.2);
-  font-weight: 500;
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.15s;
 }
 
+.sidebar .nav-link:hover {
+  background-color: #334155;
+  color: white;
+}
 
-/* ========== CONTEÚDO PRINCIPAL ========== */
+.sidebar .nav-link.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-right: 3px solid var(--sidebar-active);
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 18px;
+  border-top: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-avatar {
+  width: 36px;
+  height: 36px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.sidebar-user strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.sidebar-user span {
+  font-size: 0.75rem;
+  color: var(--sidebar-text);
+}
+
 .main-with-sidebar {
   margin-left: var(--sidebar-width);
   min-height: 100vh;
@@ -73,15 +153,10 @@ body {
   font-size: 0.9rem;
 }
 
-/* ========== UTILITÁRIOS ========== */
 .cursor-pointer {
   cursor: pointer;
 }
 
-
-/* ============================================================
-   CARDS
-   ============================================================ */
 .card {
   border: 0.5px solid var(--border);
   border-radius: var(--radius);
@@ -95,7 +170,6 @@ body {
   font-size: 0.9rem;
 }
 
-/* cards de métrica do dashboard */
 .metric-card {
   border-radius: var(--radius);
   padding: 1.25rem;
@@ -126,9 +200,6 @@ body {
   margin-top: 0.25rem;
 }
 
-/* ============================================================
-   TABELAS
-   ============================================================ */
 .table {
   font-size: 0.875rem;
 }

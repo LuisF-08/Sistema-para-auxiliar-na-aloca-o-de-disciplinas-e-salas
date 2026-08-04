@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Abas de Relatórios -->
+<div class="mb-4 border-bottom">
+  <nav class="nav nav-tabs" role="tablist">
+    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+       href="{% url 'relatorios:dashboard' %}">
+      Dashboard
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'professores' %}active{% endif %}"
+       href="{% url 'relatorios:professores' %}">
+      Professores
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'salas' %}active{% endif %}"
+       href="{% url 'relatorios:salas' %}">
+      Salas
+    </a>
+    <a class="nav-link {% if request.resolver_match.url_name == 'grade' %}active{% endif %}"
+       href="{% url 'relatorios:grade' %}">
+      Grade
+    </a>
+  </nav>
+</div>
+
+<!-- Conteúdo das abas -->
+{% block relatorios_content %}
+{% endblock %}
+{% endblock %}
