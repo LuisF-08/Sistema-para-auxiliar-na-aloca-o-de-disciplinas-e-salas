@@ -1,0 +1,68 @@
+/* Styles specific to relatorios dashboard */
+
+.relatorios-nav .nav-link {
+  color: #475569;
+  border-bottom: 2px solid transparent;
+  border-radius: 0.75rem;
+  padding: 0.7rem 1rem;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.relatorios-nav .nav-link:hover {
+  color: var(--primary-dark);
+  background-color: rgba(13, 110, 253, 0.08);
+}
+
+.relatorios-nav .nav-link.active {
+  color: var(--primary);
+  font-weight: 600;
+  background-color: rgba(13, 110, 253, 0.12);
+  border-color: transparent;
+}
+
+.reports-card {
+  border-radius: 1rem;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  padding: 1.5rem;
+  background: #ffffff;
+}
+
+.reports-table thead th {
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.reports-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.reports-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.reports-table tbody td {
+  color: #334155;
+}
+
+.reports-table .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.btn-toolbar .btn {
+  min-width: 160px;
+}
+
+@media (max-width: 767px) {
+  .reports-card {
+    padding: 1.25rem;
+  }
+  .btn-toolbar .btn {
+    min-width: auto;
+  }
+}

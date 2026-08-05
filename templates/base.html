@@ -28,7 +28,7 @@
     <div class="overflow-y-auto flex-grow-1">
       <div class="sidebar-section-label">Geral</div>
       <nav class="nav flex-column">
-        <a href="{% url 'alocacao:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'alocacao:dashboard' %}" class="nav-link {% if request.resolver_match.namespace != 'relatorios' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
           <i class="bi bi-grid-1x2"></i> Dashboard
         </a>
         <a href="{% url 'alocacao:grade_horaria' %}" class="nav-link {% if request.resolver_match.url_name == 'grade_horaria' %}active{% endif %}">
