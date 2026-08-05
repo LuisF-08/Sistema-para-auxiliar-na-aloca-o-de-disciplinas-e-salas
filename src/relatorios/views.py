@@ -171,7 +171,7 @@ class DashboardView(View):
             "periodo": periodo,
             "total_alocacoes": qs_total.count(),
             "total_salas": taxa["total_salas"],
-            "salas_ocupadas": taxa["salas_ocupadas"],
+            "salas_ocupadas": taxa["salas_ocupadas"],   
             "taxa_ocupacao": taxa["taxa"],
             "media_ociosos": eficiencia["media_assentos_ociosos"],
             "total_conflitos": conflitos["total"],
