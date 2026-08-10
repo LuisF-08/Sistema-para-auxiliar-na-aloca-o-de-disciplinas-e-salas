@@ -92,11 +92,10 @@ def calcular_horarios_pico(periodo=None, top_n=5):
         Horario.objects
         .annotate(total_alocacoes=Count("alocacoes", filter=filtro))
         .filter(total_alocacoes__gt=0)
-        .order_by("-total_alocacoes")
-        .values("dia_semana", "horario_inicio", "horario_fim", "total_alocacoes")[:top_n]
+        .order_by("-total_alocacoes")[:top_n]
     )
     for item in pico:
-        item["dia_nome"] = DIAS_SEMANA.get(item["dia_semana"], "")
+        item.dia_nome = item.get_dia_semana_display()
     return pico
 
 
@@ -331,10 +330,10 @@ def _build_grade_matrix(alocacoes, dias):
     for a in alocacoes:
         if a.horario:
             slot = a.horario.horario_inicio.strftime("%H:%M")
-            matriz[slot][a.horario.dia_semana].append(a)
+            matriz[slot][str(a.horario.dia_semana)].append(a)
     slots = sorted(matriz.keys())
     linhas = [
-        {"hora": slot, "celulas": [{"dia": d, "alocacoes": matriz[slot][d]} for d in dias]}
+        {"hora": slot, "celulas": [{"dia": str(d), "alocacoes": matriz[slot][str(d)]} for d in dias]}
         for slot in slots
     ]
     return linhas

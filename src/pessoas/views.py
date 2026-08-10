@@ -14,7 +14,7 @@ def turma_create(request):
         numero_alunos = request.POST.get('numero_alunos')
         turno = request.POST.get('turno')
 
-        curso_instancia = Curso.objects.get(id=curso_id) if curso_id else None
+        curso_instancia = Curso.objects.filter(id=curso_id).first() if curso_id else None
 
         periodo_instancia = None
         if periodo_letivo:
@@ -51,7 +51,7 @@ def turma_create(request):
 
         return redirect('pessoas:turma_list')
 
-    turmas = Turma.objects.all()
+    turmas = Turma.objects.select_related('curso', 'periodo_letivo').all()
     cursos = Curso.objects.all()
     periodos = PeriodoLetivo.objects.filter(ativo=True)
 
@@ -63,7 +63,7 @@ def turma_create(request):
 
 
 def turma_list(request):
-    turmas = Turma.objects.all()
+    turmas = Turma.objects.select_related('curso', 'periodo_letivo').all()
     cursos = Curso.objects.all()
     periodos = PeriodoLetivo.objects.all()
 
@@ -84,9 +84,18 @@ def turma_update(request, pk):
         numero_alunos = request.POST.get('numero_alunos')
         turma.turno = request.POST.get('turno')
 
-        turma.curso = get_object_or_404(Curso, pk=curso_id) if curso_id else None
-        turma.periodo_letivo = get_object_or_404(PeriodoLetivo, pk=periodo_id) if periodo_id else None
-        turma.numero_alunos = int(numero_alunos) if numero_alunos else 0
+        if not curso_id or not periodo_id:
+            messages.error(request, 'Curso e Período Letivo são campos obrigatórios.')
+            return redirect('pessoas:turma_list')
+
+        numero_alunos_int = int(numero_alunos) if numero_alunos else 0
+        if numero_alunos_int < 1:
+            messages.error(request, 'O número de alunos deve ser pelo menos 1.')
+            return redirect('pessoas:turma_list')
+
+        turma.curso = get_object_or_404(Curso, pk=curso_id)
+        turma.periodo_letivo = get_object_or_404(PeriodoLetivo, pk=periodo_id)
+        turma.numero_alunos = numero_alunos_int
 
         try:
             turma.save()
@@ -129,8 +138,8 @@ def professor_list(request):
 def professor_create(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
-        email = request.POST.get('email')
-        especialidade = request.POST.get('especialidade')
+        email = request.POST.get('email') or None
+        especialidade = request.POST.get('especialidade', '')
         carga_horaria_maxima = request.POST.get('cargaHorariaMaxima')
         ativo = request.POST.get('ativo') == 'on'
         try:
@@ -138,7 +147,7 @@ def professor_create(request):
                 nome=nome,
                 email=email,
                 especialidade=especialidade,
-                carga_horaria_maxima=int(carga_horaria_maxima) if carga_horaria_maxima else None,
+                carga_horaria_maxima=int(carga_horaria_maxima) if carga_horaria_maxima else 10,
                 ativo=ativo
             )
             messages.success(request, 'Professor cadastrado com sucesso!')
@@ -159,8 +168,8 @@ def professor_update(request, pk):
 
     if request.method == 'POST':
         professor.nome = request.POST.get('nome')
-        professor.email = request.POST.get('email')
-        professor.especialidade = request.POST.get('especialidade')
+        professor.email = request.POST.get('email') or None
+        professor.especialidade = request.POST.get('especialidade', '')
         carga_horaria_maxima = request.POST.get('cargaHorariaMaxima')
         professor.carga_horaria_maxima = int(carga_horaria_maxima) if carga_horaria_maxima else 10
         professor.ativo = request.POST.get('ativo') == 'on'

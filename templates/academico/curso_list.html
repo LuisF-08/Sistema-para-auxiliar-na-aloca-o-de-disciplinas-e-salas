@@ -99,16 +99,16 @@
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form id="formCurso" method="post" action="">
+      <form id="formCurso" method="post" action="{% url 'academico:curso_create' %}" data-create-url="{% url 'academico:curso_create' %}">
         {% csrf_token %}
         <div class="modal-body py-1 px-3">
           <div class="row g-3">
 
             <div class="col-md-6">
-              <label for="id_codigo" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Código</label>
+              <label for="id_codigo" class="form-label fw-bold text-dark mb-1" style="font-size: 13px;">Código <span class="text-danger">*</span></label>
               <input type="text" name="codigo" id="id_codigo" class="form-control border-0 py-2 px-3" 
                      placeholder="Ex: CC"
-                     style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;">
+                     style="background-color: #F0F2F5 !important; border-radius: 8px; height: 42px; font-size: 14px;" required>
             </div>
 
             <div class="col-md-6">

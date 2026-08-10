@@ -128,30 +128,16 @@ def dashboard_view(request):
 
 def dashboard_data_api(request):
     try:
-        total_alocacoes = Alocacao.objects.count()
-        conflitos_pendentes = 3
         total_salas = Sala.objects.count() or 1
-        salas_ocupadas = Alocacao.objects.values('sala').distinct().count()
-        taxa_ocupacao = int((salas_ocupadas / total_salas) * 100)
         total_professores = Professor.objects.count()
 
-        dias_semana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
-        dados_ocupacao_dias = []
-        for dia in dias_semana:
-            qtd = Alocacao.objects.filter(horario__dia_semana=dia).count()
-            percentual = int((qtd / total_salas) * 100) if total_salas > 0 else 0
-            dados_ocupacao_dias.append(percentual)
-        dados_ocupacao_dias = [80, 95, 75, 88, 65]
-
-        salas_alocadas = Alocacao.objects.values('sala').distinct().count()
-        salas_manutencao = Sala.objects.filter(ativo=False).count()
-        salas_livres = max(0, total_salas - salas_alocadas - salas_manutencao)
-        alocacoes_ativas = list(Alocacao.objects.select_related('horario', 'sala', 'turma', 'professor').filter(status__in=STATUS_ATIVOS_ALOCACAO))
-        total_alocacoes = len(alocacoes_ativas)
+        total_alocacoes = Alocacao.objects.filter(status__in=STATUS_ATIVOS_ALOCACAO).count()
         salas_alocadas = Alocacao.objects.filter(status__in=STATUS_ATIVOS_ALOCACAO).values('sala').distinct().count()
         salas_manutencao = Sala.objects.filter(ativo=False).count()
         salas_livres = max(0, total_salas - salas_alocadas - salas_manutencao)
 
+        alocacoes_ativas = list(Alocacao.objects.select_related('horario', 'sala', 'turma', 'professor').filter(status__in=STATUS_ATIVOS_ALOCACAO))
+        
         conflitos_criticos = 0
         conflitos_avisos = 0
         for alocacao in alocacoes_ativas:

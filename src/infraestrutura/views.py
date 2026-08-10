@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.db import IntegrityError
+from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import Sala
 
@@ -54,7 +55,13 @@ def sala_update(request, pk):
 def sala_delete(request, pk):
     sala = get_object_or_404(Sala, pk=pk)
     if request.method == 'POST':
-        sala.delete()
-        messages.success(request, 'Sala excluída com sucesso!')
+        try:
+            sala.delete()
+            messages.success(request, 'Sala excluída com sucesso!')
+        except ProtectedError:
+            messages.error(
+                request,
+                f'Não é possível excluir a sala "{sala.nome}" pois ela possui alocações vinculadas.'
+            )
         return redirect('infraestrutura:sala_list')
     return render(request, 'infraestrutura/sala_confirm_delete.html', {'sala': sala})

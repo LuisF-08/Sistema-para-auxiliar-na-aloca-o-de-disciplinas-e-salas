@@ -19,7 +19,7 @@ def disciplina_create(request):
         nome = request.POST.get('nome')
         codigo = request.POST.get('codigo')
         carga_horaria = request.POST.get('carga_horaria_semanal')
-        periodo_rec = request.POST.get('periodo')
+        periodo_rec = request.POST.get('periodo_recomendado')
         curso_id = request.POST.get('curso')
         
         if not curso_id:
@@ -56,7 +56,7 @@ def disciplina_update(request, pk):
         disciplina.nome = request.POST.get('nome')
         disciplina.codigo = request.POST.get('codigo')
         disciplina.carga_horaria_semanal = request.POST.get('carga_horaria_semanal')
-        disciplina.periodo_recomendado = request.POST.get('periodo') or None
+        disciplina.periodo_recomendado = request.POST.get('periodo_recomendado') or None
         curso_id = request.POST.get('curso')
         disciplina.curso = Curso.objects.filter(id=curso_id).first() if curso_id else None
         
@@ -74,8 +74,14 @@ def disciplina_delete(request, pk):
     disciplina = get_object_or_404(Disciplina, pk=pk)
     
     if request.method == 'POST':
-        disciplina.delete()
-        messages.success(request, 'Disciplina excluída com sucesso!')
+        try:
+            disciplina.delete()
+            messages.success(request, 'Disciplina excluída com sucesso!')
+        except ProtectedError:
+            messages.error(
+                request,
+                f'Não é possível excluir a disciplina "{disciplina.nome}" pois ela possui alocações vinculadas.'
+            )
         return redirect('academico:disciplina_list')
     
     return render(request, 'academico/disciplina_confirm_delete.html', {'disciplina': disciplina})
@@ -90,16 +96,26 @@ def curso_create(request):
         nome = request.POST.get('nome')
         codigo = request.POST.get('codigo')
         
+        if not codigo or not codigo.strip():
+            messages.error(request, "O código do curso é obrigatório.")
+            return redirect('academico:curso_list')
+
         if curso_id:
             curso = get_object_or_404(Curso, id=curso_id)
             curso.nome = nome
             curso.codigo = codigo
-            curso.save()
-            messages.success(request, "Curso atualizado com sucesso!")
+            try:
+                curso.save()
+                messages.success(request, "Curso atualizado com sucesso!")
+            except IntegrityError:
+                messages.error(request, f'Já existe um curso cadastrado com o código "{codigo}" ou nome "{nome}".')
         else:
             if nome:
-                Curso.objects.create(nome=nome, codigo=codigo)
-                messages.success(request, "Curso cadastrado com sucesso!")
+                try:
+                    Curso.objects.create(nome=nome, codigo=codigo)
+                    messages.success(request, "Curso cadastrado com sucesso!")
+                except IntegrityError:
+                    messages.error(request, f'Já existe um curso cadastrado com o código "{codigo}" ou nome "{nome}".')
             else:
                 messages.error(request, "O nome do curso é obrigatório.")
         
@@ -113,6 +129,9 @@ def curso_update(request, pk):
     if request.method == 'POST':
         curso.nome = request.POST.get('nome')
         curso.codigo = request.POST.get('codigo')
+        if not curso.codigo or not curso.codigo.strip():
+            messages.error(request, "O código do curso é obrigatório.")
+            return redirect('academico:curso_list')
         try:
             curso.save()
             messages.success(request, "Curso atualizado com sucesso!")
